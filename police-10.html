@@ -1,0 +1,3358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>POLICE — Escape the Prison</title>
+<style>
+  :root{
+    --accent:#ff5b3d; --accent2:#ffb63d; --bg:#0b0d12; --panel:#151a22;
+    --text:#e9ecf2; --dim:#8a93a6; --red:#e8443a; --blue:#3d7bff; --yellow:#f3c93d; --green:#3ddc84;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden;user-select:none;}
+  #app{position:relative;width:100%;height:100%;}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at center, #1a1f2b 0%, #08090c 100%);gap:18px;padding:20px;text-align:center;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .hidden{display:none !important;}
+  h1.logo{font-size:56px;letter-spacing:10px;margin:0;color:var(--accent);
+    text-shadow:0 0 24px rgba(255,91,61,.6);font-weight:800;}
+  h1.logo span{color:var(--text);}
+  .subtitle{color:var(--dim);letter-spacing:3px;font-size:13px;text-transform:uppercase;margin-top:-14px;}
+  button{cursor:pointer;border:none;border-radius:10px;padding:14px 30px;font-size:16px;font-weight:600;
+    background:var(--accent);color:#fff;transition:.15s;letter-spacing:.5px;}
+  button:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,91,61,.35);}
+  button.secondary{background:#232935;color:var(--text);}
+  button.small{padding:8px 16px;font-size:13px;border-radius:8px;}
+  .menu-col{display:flex;flex-direction:column;gap:14px;width:260px;}
+  input[type=text]{background:#1a2028;border:2px solid #2a3140;color:var(--text);padding:12px 14px;
+    border-radius:8px;font-size:16px;text-align:center;letter-spacing:2px;outline:none;}
+  input[type=text]:focus{border-color:var(--accent);}
+  .panel{background:var(--panel);border:1px solid #232a37;border-radius:14px;padding:24px 30px;max-width:520px;}
+  .warn{border-color:var(--red);background:#241417;color:#ffb3ab;font-size:13px;line-height:1.5;}
+  .tut-step{max-width:520px;line-height:1.6;font-size:15px;color:var(--dim);}
+  .tut-step b{color:var(--text)}
+  .dot-row{display:flex;gap:6px;justify-content:center;margin-top:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#2a3140;}
+  .dot.active{background:var(--accent);}
+  .code-box{font-size:34px;letter-spacing:10px;font-weight:800;color:var(--accent2);background:#1a2028;
+    padding:10px 26px;border-radius:10px;border:2px dashed #3a4250;}
+  .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  .party-slot{width:88px;min-height:82px;border-radius:10px;background:#1a2028;border:2px solid #2a3140;
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);flex-direction:column;gap:4px;padding:6px 2px;text-align:center;}
+  .party-slot.filled{border-color:var(--accent2);color:var(--text);}
+  #gameCanvas{display:block;position:absolute;inset:0;width:100%;height:100%;background:#000;image-rendering:pixelated;}
+  #hud{position:absolute;top:0;left:0;right:0;padding:12px 16px;display:flex;justify-content:space-between;
+    align-items:flex-start;pointer-events:none;font-size:13px;z-index:5;}
+  .hud-box{background:rgba(10,12,16,.72);border:1px solid #2a3140;border-radius:10px;padding:8px 14px;
+    backdrop-filter:blur(4px);}
+  .hearts span{color:var(--red);font-size:18px;margin-right:2px;}
+  .hearts span.lost{color:#333;}
+  .keyring{display:flex;gap:6px;margin-top:4px;}
+  .keyicon{width:16px;height:16px;border-radius:4px;opacity:.25;}
+  .keyicon.have{opacity:1;box-shadow:0 0 6px currentColor;}
+  #timerLabel{font-size:22px;font-weight:800;letter-spacing:1px;}
+  #phaseLabel{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+  #msgBox{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(10,12,16,.85);
+    border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:14px;pointer-events:none;
+    opacity:0;transition:opacity .25s;z-index:6;max-width:80%;text-align:center;}
+  #msgBox.show{opacity:1;}
+  #notebook{position:absolute;top:96px;right:12px;background:rgba(10,12,16,.8);border:1px solid #2a3140;
+    border-radius:10px;padding:10px 14px;font-size:12px;color:var(--dim);z-index:5;min-width:150px;}
+  #notebook b{color:var(--accent2);display:block;margin-bottom:4px;font-size:11px;letter-spacing:1px;}
+  #wrenchBar{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);width:220px;height:14px;
+    background:#1a2028;border:1px solid #2a3140;border-radius:8px;overflow:hidden;display:none;z-index:6;}
+  #wrenchFill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));}
+  #keypad{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.75);z-index:20;}
+  #keypad .panel{width:300px;}
+  #passDisplay{font-size:30px;letter-spacing:12px;margin:14px 0;color:var(--accent2);font-weight:800;}
+  .padgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .padgrid button{padding:14px 0;font-size:18px;background:#1a2028;color:var(--text);}
+  #frustOverlay{position:absolute;inset:0;pointer-events:none;z-index:15;display:none;}
+  @keyframes heartbeat{0%,100%{transform:scale(1);}15%{transform:scale(1.12);}30%{transform:scale(1);}45%{transform:scale(1.08);}60%{transform:scale(1);}}
+  #frustOverlay .ring{position:absolute;inset:-10%;border-radius:50%;
+    box-shadow:0 0 0 40vmax rgba(150,0,0,.75);
+    background:radial-gradient(ellipse 55% 40% at 50% 50%, transparent 0%, transparent 30%, rgba(120,0,0,.55) 70%, rgba(40,0,0,.95) 100%);
+    animation:heartbeat 0.9s ease-in-out infinite;}
+  #joinInput{width:220px;}
+  .flex-center{display:flex;align-items:center;justify-content:center;}
+  .footer-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);color:var(--dim);
+    font-size:11px;letter-spacing:1px;z-index:5;}
+  .net-note{font-size:11px;color:var(--dim);max-width:400px;margin-top:6px;line-height:1.5;}
+  #hud2{position:absolute;top:0;left:0;right:0;padding:12px 16px;display:none;justify-content:space-between;
+    align-items:flex-start;pointer-events:none;font-size:13px;z-index:5;}
+  #inventoryBar{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:6;}
+  .invSlot{width:52px;height:52px;border-radius:10px;background:rgba(10,12,16,.8);border:1px solid #2a3140;
+    display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;pointer-events:auto;cursor:pointer;touch-action:none;}
+  .invSlot .invDrop{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;
+    background:#ff5b3d;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .invSlot .invTimer{position:absolute;bottom:1px;right:3px;font-size:9px;color:var(--accent2);}
+  #rushWarning{display:none;position:absolute;top:40%;left:50%;transform:translateX(-50%);
+    background:rgba(120,0,0,.85);border:1px solid #ff5b3d;border-radius:10px;padding:10px 18px;
+    font-weight:800;z-index:12;animation:eyePulse .6s ease-in-out infinite;}
+  #wireOverlay{display:none;position:absolute;inset:0;z-index:20;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.7);}
+  #grechesOverlay{display:none;position:absolute;top:50%;right:18px;transform:translateY(-50%);
+    z-index:20;pointer-events:none;}
+  #grechesOverlay .panel{pointer-events:auto;width:230px;}
+  #grechesRing{position:relative;width:210px;height:210px;border-radius:50%;border:4px solid #333;margin:14px auto;}
+  #grechesPointer{position:absolute;top:50%;left:50%;width:3px;height:105px;background:#fff;
+    transform-origin:top center;transform:translateX(-50%) rotate(0deg);}
+  #grechesGoldWrap{position:absolute;top:50%;left:50%;width:0;height:0;transform-origin:0 0;
+    transform:rotate(0deg);}
+  #grechesGold{position:absolute;width:44px;height:44px;border-radius:50%;background:#ffd94d;
+    box-shadow:0 0 16px #ffd94d;top:83px;left:-22px;}
+  #wireGrid{display:flex;justify-content:space-between;gap:40px;margin-top:12px;}
+  .wireCol{display:flex;flex-direction:column;gap:10px;}
+  .wireBtn{width:60px;height:36px;border-radius:8px;border:2px solid #333;cursor:pointer;}
+  .wireBtn.selected{outline:3px solid #fff;}
+  .wireBtn.matched{opacity:.35;cursor:default;}
+  #btnClassAbility{position:absolute;right:106px;bottom:110px;width:60px;height:60px;border-radius:50%;
+    font-size:22px;background:rgba(126,224,255,0.22);border-color:#7ee0ff;z-index:9;pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  #btnClassAbility .abilityCd{position:absolute;bottom:-16px;font-size:10px;color:var(--dim);}
+  #teleportPanel,#teleportRequestPopup{display:none;position:absolute;inset:0;z-index:22;align-items:center;
+    justify-content:center;background:rgba(0,0,0,.7);}
+  #teleportPanel .panel,#teleportRequestPopup .panel{min-width:240px;}
+  .teleportRow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;
+    border-bottom:1px solid #232a37;font-size:13px;}
+  .teleportRow button{padding:6px 10px;font-size:11px;}
+  #chickenJumpOverlay{display:none;position:absolute;inset:0;z-index:26;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.8);}
+  #cjPlayArea{position:relative;width:300px;height:130px;background:#0d1117;border:2px solid #333;
+    border-radius:8px;overflow:hidden;margin-top:8px;touch-action:none;}
+  #cjChicken{position:absolute;left:20px;bottom:10px;font-size:26px;}
+  .cjBlock{position:absolute;bottom:10px;width:18px;height:26px;background:#e8443a;border-radius:3px;}
+  .gemBadge{background:#1a2028;border:1px solid #3a4250;border-radius:20px;padding:6px 16px;
+    font-size:14px;font-weight:700;color:#7ee0ff;letter-spacing:.5px;}
+  #achList{display:flex;flex-direction:column;gap:8px;max-width:480px;max-height:60vh;overflow-y:auto;
+    padding:4px;}
+  #classList{display:flex;flex-direction:column;gap:8px;max-width:480px;max-height:60vh;overflow-y:auto;
+    padding:4px;}
+  .achCard{display:flex;align-items:center;gap:12px;background:#151a22;border:1px solid #232a37;
+    border-radius:10px;padding:10px 14px;text-align:left;}
+  .achCard.locked{opacity:.45;}
+  .achCard .achIcon{font-size:22px;width:30px;text-align:center;flex-shrink:0;}
+  .achCard .achInfo{flex:1;}
+  .achCard .achName{font-weight:700;font-size:14px;}
+  .achCard .achDesc{font-size:12px;color:var(--dim);margin-top:2px;}
+  .achCard .achGems{font-size:12px;color:#7ee0ff;font-weight:700;white-space:nowrap;}
+  #achievementPopup{position:absolute;top:16px;left:50%;transform:translateX(-50%) translateY(-120%);
+    background:#151a22;border:1px solid #7ee0ff;border-radius:12px;padding:12px 20px;z-index:30;
+    text-align:center;transition:transform .35s ease;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  #achievementPopup.show{transform:translateX(-50%) translateY(0);}
+  #achievementPopup .achPopTitle{font-size:11px;letter-spacing:2px;color:#7ee0ff;text-transform:uppercase;}
+  #achievementPopup .achPopName{font-size:16px;font-weight:800;margin-top:2px;}
+  #achievementPopup .achPopGems{font-size:12px;color:var(--accent2);margin-top:2px;}
+  #chaseEye{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:38px;
+    opacity:0;transition:opacity .25s;z-index:7;filter:drop-shadow(0 0 10px rgba(255,0,0,.8));
+    animation:eyePulse 1s ease-in-out infinite;}
+  #chaseEye.show{opacity:1;}
+  @keyframes eyePulse{0%,100%{transform:translateY(-50%) scale(1);}50%{transform:translateY(-50%) scale(1.15);}}
+  #mobileControls{display:none;position:absolute;inset:0;pointer-events:none;z-index:8;}
+  .touchBtn{position:absolute;pointer-events:auto;background:rgba(255,255,255,0.12);
+    border:2px solid rgba(255,255,255,0.3);border-radius:14px;color:#fff;font-size:22px;
+    display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;}
+  #joystickBase{position:absolute;left:16px;bottom:16px;width:130px;height:130px;border-radius:50%;
+    background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.28);pointer-events:auto;touch-action:none;}
+  #joystickKnob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;
+    background:rgba(255,255,255,0.35);border:2px solid rgba(255,255,255,0.6);pointer-events:none;}
+  #btnWrenchMobile{right:106px;bottom:16px;width:76px;height:76px;border-radius:50%;font-size:28px;
+    background:rgba(255,182,61,0.25);border-color:#ffb63d;}
+  #btnShootMobile{right:16px;bottom:16px;width:76px;height:76px;border-radius:50%;font-size:28px;
+    background:rgba(255,91,61,0.25);border-color:#ff5b3d;}
+  @media (pointer: coarse){
+    #mobileControls{display:block;}
+    .footer-hint{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- USERNAME -->
+  <div id="scr-username" class="screen">
+    <h1 class="logo">POLICE<span>.</span></h1>
+    <div class="subtitle">a prison escape</div>
+    <div class="panel warn">
+      ⚠ <b>Photosensitivity warning:</b> this game uses a pulsing red vignette and rapid flashing
+      light effects when you get caught by a guard. If you are sensitive to flashing visuals, play with caution.
+    </div>
+    <div class="menu-col">
+      <input id="usernameInput" type="text" maxlength="14" placeholder="ENTER USERNAME">
+      <button id="btnConfirmName">Continue</button>
+    </div>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div id="scr-menu" class="screen hidden">
+    <h1 class="logo">POLICE<span>.</span></h1>
+    <div class="subtitle" id="welcomeLine">welcome</div>
+    <div class="gemBadge" id="menuGemBadge">💎 0</div>
+    <div class="menu-col">
+      <button id="btnSingle">Singleplayer</button>
+      <button id="btnMulti" class="secondary">Multiplayer</button>
+      <button id="btnAchievements" class="secondary">🏆 Achievements</button>
+      <button id="btnClasses" class="secondary">🎭 Classes</button>
+      <button id="btnChapter2" class="secondary">🚪 Chapter 2</button>
+      <button id="btnHowTo" class="secondary">How To Play</button>
+    </div>
+    <div style="margin-top:4px;">
+      <button id="btnChangeName" class="secondary small">Not you? Change name</button>
+    </div>
+  </div>
+
+  <!-- CLASSES -->
+  <div id="scr-classes" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">CLASSES</h1>
+    <div class="gemBadge" id="classGemBadge">💎 0</div>
+    <div id="classList"></div>
+    <button id="btnClassBack" class="secondary" style="margin-top:10px;">Back</button>
+  </div>
+
+  <!-- CHAPTER 2 SUBMENU -->
+  <div id="scr-ch2menu" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">CHAPTER 2</h1>
+    <div class="subtitle">100 doors. No day. No night.</div>
+    <div class="menu-col">
+      <button id="btnCh2Single">Singleplayer</button>
+      <button id="btnCh2Multi" class="secondary">Multiplayer</button>
+      <button id="btnCh2Back" class="secondary">Back</button>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div id="scr-achievements" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">ACHIEVEMENTS</h1>
+    <div class="gemBadge" id="achGemBadge">💎 0</div>
+    <div id="achList"></div>
+    <button id="btnAchBack" class="secondary" style="margin-top:10px;">Back</button>
+  </div>
+
+  <!-- TUTORIAL -->
+  <div id="scr-tutorial" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">HOW TO PLAY</h1>
+    <div class="tut-step" id="tutText"></div>
+    <div class="dot-row" id="tutDots"></div>
+    <div class="row">
+      <button id="btnTutSkip" class="secondary">Skip</button>
+      <button id="btnTutNext">Next</button>
+    </div>
+  </div>
+
+  <!-- MULTIPLAYER LOBBY CHOICE -->
+  <div id="scr-mp" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">MULTIPLAYER</h1>
+    <div class="menu-col">
+      <button id="btnCreateParty">Create Party</button>
+      <button id="btnJoinParty" class="secondary">Join Party</button>
+      <button id="btnMpBack" class="secondary">Back</button>
+    </div>
+  </div>
+
+  <div id="scr-mp-join" class="screen hidden">
+    <h1 class="logo" style="font-size:34px;">JOIN PARTY</h1>
+    <input id="joinInput" type="text" maxlength="5" placeholder="CODE e.g. X46YT">
+    <button id="btnDoJoin">Join</button>
+    <button id="btnJoinBack" class="secondary">Back</button>
+  </div>
+
+  <div id="scr-mp-lobby" class="screen hidden">
+    <h1 class="logo" style="font-size:30px;">PARTY LOBBY</h1>
+    <div>Party Code</div>
+    <div class="code-box" id="partyCodeDisplay">X46YT</div>
+    <div class="row" id="partySlots"></div>
+    <div class="row">
+      <button id="btnStartParty">Start Game</button>
+      <button id="btnLeaveParty" class="secondary">Leave Party</button>
+    </div>
+    <div class="net-note">
+      Real peer-to-peer connection over WebRTC (via PeerJS's free public broker — no account or server setup needed).
+      Works across different Wi-Fi networks and devices. Very strict corporate/school firewalls can occasionally block
+      P2P connections — if a join fails, try a different network.
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="scr-game" class="screen hidden" style="padding:0;">
+    <canvas id="gameCanvas"></canvas>
+    <div id="chaseEye">👁️</div>
+    <div id="hud">
+      <div class="hud-box">
+        <div class="hearts" id="heartsBox"></div>
+        <div class="keyring" id="keyring"></div>
+        <div style="margin-top:6px;">🪙 <span id="coinCount">0</span>/4 coins</div>
+        <div style="margin-top:2px;">🔫 <span id="ammoCount">0</span> bullets</div>
+      </div>
+      <div class="hud-box" style="text-align:right;">
+        <div id="phaseLabel">DAY</div>
+        <div id="timerLabel">00:45</div>
+        <div style="color:var(--dim);font-size:11px;">Night #<span id="nightNum">0</span></div>
+      </div>
+    </div>
+    <div id="hud2" style="display:none;">
+      <div class="hud-box" id="hud2Left">
+        <div class="hearts" id="hearts2Box"></div>
+        <div style="margin-top:6px;">🚪 Door <span id="doorNumLabel">1</span>/100</div>
+        <div id="keyReqRow">🔑 <span id="keyCount2">0</span>/<span id="keyReq2">0</span></div>
+        <div id="ammoRow2" style="display:none;">🔫 <span id="ammoCount2">0</span></div>
+      </div>
+      <div class="hud-box" id="hud2Right" style="text-align:right;">
+        <div id="ch2StatusLabel" style="color:var(--dim);font-size:11px;">&nbsp;</div>
+        <div id="ch2FinalStatus" style="font-size:12px;"></div>
+      </div>
+    </div>
+    <div id="inventoryBar"></div>
+    <div id="rushWarning">👁️ Something is coming... HIDE!</div>
+    <div id="grechesOverlay">
+      <div class="panel" style="text-align:center;">
+        <div style="color:#ff5b3d;font-weight:800;">GRECHES HAS YOU</div>
+        <div style="font-size:12px;color:var(--dim);margin:6px 0;">Tap when the line crosses the gold zone</div>
+        <div id="grechesTimer" style="font-size:22px;font-weight:800;">10.0s</div>
+        <div id="grechesRing"><div id="grechesPointer"></div><div id="grechesGoldWrap"><div id="grechesGold"></div></div></div>
+        <div style="font-size:12px;color:var(--dim);">Hits: <span id="grechesHits">0</span>/3</div>
+        <button id="btnGrechesTap" style="margin-top:10px;width:100%;">TAP!</button>
+      </div>
+    </div>
+    <div id="btnClassAbility" class="touchBtn" style="display:none;">✨</div>
+    <div id="teleportPanel">
+      <div class="panel" style="text-align:center;">
+        <div style="font-weight:800;">TELEPORTER</div>
+        <div id="teleportList" style="margin-top:8px;"></div>
+        <button id="btnTeleportClose" class="secondary small" style="margin-top:10px;">Close</button>
+      </div>
+    </div>
+    <div id="teleportRequestPopup">
+      <div class="panel" style="text-align:center;">
+        <div style="font-weight:800;" id="teleportReqText">Someone wants you to teleport to them</div>
+        <div class="row" style="margin-top:10px;">
+          <button id="btnTeleportAccept" class="small">Accept</button>
+          <button id="btnTeleportDecline" class="secondary small">Decline</button>
+        </div>
+      </div>
+    </div>
+    <div id="chickenJumpOverlay">
+      <div class="panel" style="text-align:center;">
+        <div style="font-weight:800;">🐔 CHICKEN JUMP</div>
+        <div id="cjScore" style="font-size:12px;color:var(--dim);">Score: 0</div>
+        <div id="cjPlayArea"><div id="cjChicken">🐔</div></div>
+        <div style="font-size:11px;color:var(--dim);margin-top:6px;">Tap the play area to jump</div>
+        <button id="btnCjStop" class="secondary small" style="margin-top:8px;">Stop</button>
+      </div>
+    </div>
+    <div id="wireOverlay">
+      <div class="panel" style="text-align:center;">
+        <div style="font-weight:800;">CONNECT THE WIRES</div>
+        <div style="font-size:12px;color:var(--dim);margin:6px 0;">Match each left wire to its color on the right</div>
+        <div id="wireGrid"></div>
+      </div>
+    </div>
+    <div id="notebook"><b>PASSWORD DIGITS</b><div id="digitList">? ? ? ? ?</div></div>
+    <div id="wrenchBar"><div id="wrenchFill"></div></div>
+    <div id="msgBox"></div>
+    <div class="footer-hint">WASD / Arrows move · hold SPACE at wrench machine · E to shoot · walk into keys, coins &amp; doors</div>
+    <div id="mobileControls">
+      <div id="joystickBase"><div id="joystickKnob"></div></div>
+      <div class="touchBtn" id="btnWrenchMobile">🔧</div>
+      <div class="touchBtn" id="btnShootMobile">🔫</div>
+    </div>
+    <div id="frustOverlay"><div class="ring"></div></div>
+    <div id="keypad">
+      <div class="panel">
+        <div>ENTER 5-DIGIT PASSWORD</div>
+        <div id="passDisplay">_ _ _ _ _</div>
+        <div class="padgrid" id="padGrid"></div>
+        <div class="row" style="margin-top:10px;">
+          <button id="padClear" class="secondary small">Clear</button>
+          <button id="padSubmit" class="small">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="achievementPopup">
+    <div class="achPopTitle">🏆 Achievement Unlocked</div>
+    <div class="achPopName" id="achPopName">—</div>
+    <div class="achPopGems" id="achPopGems">+0 gems</div>
+  </div>
+
+  <!-- END SCREENS -->
+  <div id="scr-end" class="screen hidden">
+    <h1 class="logo" id="endTitle">GAME OVER</h1>
+    <div class="tut-step" id="endText"></div>
+    <button id="btnRestart">Back to Menu</button>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================ GLOBAL STATE ============================ */
+let username = "";
+let isMultiplayer = false;
+let gameMode = "ch1"; // "ch1" or "ch2"
+let partyCode = "";
+let partySlots = []; // for lobby preview only
+
+const screens = {};
+["username","menu","tutorial","mp","mp-join","mp-lobby","game","end","achievements","ch2menu","classes"].forEach(id=>{
+  screens[id] = document.getElementById("scr-"+id);
+});
+function showScreen(id){
+  Object.values(screens).forEach(s=>s.classList.add("hidden"));
+  screens[id].classList.remove("hidden");
+}
+
+/* ============================ ACHIEVEMENTS & GEMS ============================ */
+const ACHIEVEMENTS = [
+  {id:"first_death", icon:"💀", name:"First death", desc:"Die for the first time", gems:1},
+  {id:"break_out", icon:"🏃", name:"Break out", desc:"Win for the first time", gems:3},
+  {id:"terminator", icon:"🦾", name:"Terminator", desc:"Win with only 1 heart remaining", gems:3},
+  {id:"cant_enter_password", icon:"⏰", name:"I can't enter password", desc:"Run out of time without ever entering the exit password", gems:2},
+  {id:"too_slow", icon:"🥵", name:"Too slow", desc:"Get chased for 3 minutes straight in one night without a break", gems:2},
+  {id:"lonely", icon:"🛏️", name:"Lonely", desc:"Don't leave your cell for an entire night", gems:1},
+  {id:"speedrun", icon:"⚡", name:"What a speedrun", desc:"Have all 4 gates unlocked, exactly 2/4 coins, and the full password known — all at once", gems:2},
+  {id:"unfinished_machine", icon:"🔧", name:"Wait I didn't finish machine!", desc:"Start a wrench machine but don't finish it before the night ends", gems:1},
+  {id:"first_shoot", icon:"🔫", name:"First shoot", desc:"Fire the gun at the guard for the first time", gems:1},
+  {id:"what_waste", icon:"🎯", name:"What a waste", desc:"Empty all 3 bullets from one gun without landing a single hit", gems:1},
+  {id:"real_solver", icon:"🧠", name:"Real Solver", desc:"Win without losing a heart, picking up bullets, or using a class", gems:5},
+  {id:"real_crew", icon:"👥", name:"Real Crew", desc:"Play with a full 4-player party for the first time", gems:1},
+  {id:"determination", icon:"🔥", name:"Determination", desc:"Win with a full party without anyone ever losing a heart", gems:10},
+  {id:"dont_know_password", icon:"❓", name:"I don't know password", desc:"Reach the exit door without having found a single password digit", gems:3},
+  {id:"elevatorist", icon:"🛗", name:"Elevatorist", desc:"Win Chapter 2 for the first time", gems:5},
+  {id:"bound", icon:"🚪", name:"Bound", desc:"Encounter Rush for the first time", gems:1},
+  {id:"door100_death", icon:":(", name:":(", desc:"Die on door 100", gems:2},
+  {id:"friend_q", icon:"👻", name:"Friend?", desc:"Lose a heart to Greches", gems:1},
+  {id:"halfway", icon:"🚶", name:"Halfway", desc:"Reach door 50 in Chapter 2", gems:1},
+  {id:"real_friend", icon:"🙋", name:"Real Friend", desc:"Reach Chapter 2 with only one player in the party", gems:3},
+  {id:"mafia", icon:"🕴️", name:"Mafia", desc:"Start Chapter 2 with a full party", gems:1},
+];
+const GEMS_KEY="police_game_gems", ACH_KEY="police_game_achievements";
+let gems=0, unlockedAchievements={};
+function loadProgress(){
+  try{ gems=parseInt(localStorage.getItem(GEMS_KEY)||"0",10)||0; }catch(e){ gems=0; }
+  try{ unlockedAchievements=JSON.parse(localStorage.getItem(ACH_KEY)||"{}"); }catch(e){ unlockedAchievements={}; }
+}
+function saveGems(){ try{ localStorage.setItem(GEMS_KEY,String(gems)); }catch(e){} }
+function saveAchievements(){ try{ localStorage.setItem(ACH_KEY,JSON.stringify(unlockedAchievements)); }catch(e){} }
+function refreshGemBadges(){
+  const t="💎 "+gems;
+  const a=document.getElementById("menuGemBadge"), b=document.getElementById("achGemBadge");
+  if(a) a.textContent=t;
+  if(b) b.textContent=t;
+}
+function addGems(n){ gems+=n; saveGems(); refreshGemBadges(); }
+function unlockAchievement(id){
+  if(unlockedAchievements[id]) return;
+  const ach=ACHIEVEMENTS.find(a=>a.id===id);
+  if(!ach) return;
+  unlockedAchievements[id]=true;
+  gems+=ach.gems;
+  saveAchievements(); saveGems(); refreshGemBadges();
+  if(id==="real_solver" && typeof unlockedClasses!=="undefined" && !unlockedClasses.sneaky){
+    unlockedClasses.sneaky=true; saveClasses();
+    showMsg("Real Solver unlocked the Sneaky class!", 3000);
+  }
+  showAchievementPopup(ach);
+  if(!screens["achievements"].classList.contains("hidden")) renderAchievementsScreen();
+  if(screens["classes"] && !screens["classes"].classList.contains("hidden")) renderClassesScreen();
+}
+let achPopupTimer=null;
+function showAchievementPopup(ach){
+  document.getElementById("achPopName").textContent = ach.icon+" "+ach.name;
+  document.getElementById("achPopGems").textContent = "+"+ach.gems+" gem"+(ach.gems===1?"":"s");
+  const pop=document.getElementById("achievementPopup");
+  pop.classList.add("show");
+  clearTimeout(achPopupTimer);
+  achPopupTimer=setTimeout(()=>pop.classList.remove("show"), 4200);
+}
+function renderAchievementsScreen(){
+  refreshGemBadges();
+  const list=document.getElementById("achList"); list.innerHTML="";
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked=!!unlockedAchievements[a.id];
+    const card=document.createElement("div");
+    card.className="achCard"+(unlocked?"":" locked");
+    card.innerHTML =
+      '<div class="achIcon">'+(unlocked?a.icon:"🔒")+'</div>'+
+      '<div class="achInfo"><div class="achName">'+a.name+'</div><div class="achDesc">'+a.desc+'</div></div>'+
+      '<div class="achGems">+'+a.gems+' 💎</div>';
+    list.appendChild(card);
+  });
+}
+document.getElementById("btnAchievements").onclick=()=>{ renderAchievementsScreen(); showScreen("achievements"); };
+document.getElementById("btnAchBack").onclick=()=> showScreen("menu");
+const CH1_WIN_KEY="police_game_ch1_won";
+let hasWonChapter1=false;
+function loadCh1Flag(){ try{ hasWonChapter1 = localStorage.getItem(CH1_WIN_KEY)==="1"; }catch(e){ hasWonChapter1=false; } }
+function markCh1Won(){ hasWonChapter1=true; try{ localStorage.setItem(CH1_WIN_KEY,"1"); }catch(e){} }
+loadCh1Flag();
+document.getElementById("btnChapter2").onclick=()=>{
+  if(!hasWonChapter1){ showMsg("Beat Chapter 1 at least once to unlock Chapter 2.", 3000); return; }
+  showScreen("ch2menu");
+};
+document.getElementById("btnCh2Back").onclick=()=> showScreen("menu");
+
+/* ============================ CLASSES ============================ */
+const CLASSES = [
+  {id:"speedster", icon:"⚡", name:"Speedster", desc:"20% faster movement than a normal player", cost:3},
+  {id:"agent", icon:"🕵️", name:"Agent", desc:"Start every run with 1-3 bullets to stun the guard", cost:5},
+  {id:"sneaky", icon:"🥷", name:"Sneaky", desc:"Ability: turn invisible for 5s, guards can't see you. 45s cooldown. Unlocks by earning the Real Solver achievement.", cost:0, achGate:"real_solver"},
+  {id:"sleepy", icon:"😴", name:"Sleepy", desc:"Guards need to be 35% closer to notice you", cost:4},
+  {id:"detector", icon:"📡", name:"Detector", desc:"Ability: reveal the guard's position for 8s. 60s cooldown.", cost:4},
+  {id:"teleporter", icon:"🌀", name:"Teleporter", desc:"Ability: teleport to a teammate, or request one teleport to you. 60s cooldown.", cost:12},
+  {id:"tank", icon:"🛡️", name:"Tank", desc:"Start with 4 hearts instead of 3", cost:8},
+  {id:"nightvision", icon:"🌙", name:"Nightvision", desc:"Permanent flashlight-strength vision in Chapter 2 blackouts, and Greches can never attack you. Chapter 2 only.", cost:20, ch2Only:true},
+  {id:"adrenaline", icon:"💉", name:"Adrenaline", desc:"Ability: 60% faster movement for 4s. 30s cooldown.", cost:8},
+  {id:"gamer", icon:"🎮", name:"Gamer", desc:"Ability: play a quick Chicken Jump minigame for fun. No gameplay effect.", cost:1},
+  {id:"engineer", icon:"🔧", name:"Engineer", desc:"Your wrench/machine work completes 1.25x faster than other players'", cost:5},
+  {id:"speaker", icon:"📢", name:"Speaker", desc:"Ability: drop a decoy speaker that draws the guard for 3s (1 hit to destroy). 45s cooldown.", cost:8},
+];
+const CLASS_KEY="police_game_classes", EQUIP_KEY="police_game_equipped_class";
+let unlockedClasses={}, equippedClass=null;
+function loadClasses(){
+  try{ unlockedClasses=JSON.parse(localStorage.getItem(CLASS_KEY)||"{}"); }catch(e){ unlockedClasses={}; }
+  try{ equippedClass=localStorage.getItem(EQUIP_KEY)||null; if(equippedClass==="") equippedClass=null; }catch(e){ equippedClass=null; }
+}
+function saveClasses(){ try{ localStorage.setItem(CLASS_KEY, JSON.stringify(unlockedClasses)); }catch(e){} }
+function saveEquip(){ try{ localStorage.setItem(EQUIP_KEY, equippedClass||""); }catch(e){} }
+loadClasses();
+function renderClassesScreen(){
+  refreshGemBadges();
+  const list=document.getElementById("classList"); list.innerHTML="";
+  CLASSES.forEach(c=>{
+    const unlocked=!!unlockedClasses[c.id];
+    const card=document.createElement("div");
+    card.className="achCard"+(unlocked?"":" locked");
+    let actionHtml;
+    if(unlocked){
+      const equipped=equippedClass===c.id;
+      actionHtml='<button class="secondary small" data-act="equip" data-id="'+c.id+'">'+(equipped?"Equipped ✓":"Equip")+'</button>';
+    } else if(c.achGate){
+      const ach=ACHIEVEMENTS.find(a=>a.id===c.achGate);
+      actionHtml='<span style="font-size:11px;color:var(--dim);">Unlock via "'+(ach?ach.name:c.achGate)+'"</span>';
+    } else {
+      actionHtml='<button class="secondary small" data-act="buy" data-id="'+c.id+'">Unlock 💎'+c.cost+'</button>';
+    }
+    card.innerHTML =
+      '<div class="achIcon">'+(unlocked?c.icon:"🔒")+'</div>'+
+      '<div class="achInfo"><div class="achName">'+c.name+'</div><div class="achDesc">'+c.desc+'</div></div>'+
+      '<div>'+actionHtml+'</div>';
+    list.appendChild(card);
+  });
+  list.querySelectorAll('button[data-act="buy"]').forEach(b=>{
+    b.onclick=()=>{
+      const cls=CLASSES.find(c=>c.id===b.dataset.id);
+      if(gems<cls.cost){ showMsg("Not enough gems.",1800); return; }
+      gems-=cls.cost; saveGems(); refreshGemBadges();
+      unlockedClasses[cls.id]=true; saveClasses();
+      showMsg("Unlocked "+cls.name+"!",2200);
+      renderClassesScreen();
+    };
+  });
+  list.querySelectorAll('button[data-act="equip"]').forEach(b=>{
+    b.onclick=()=>{
+      equippedClass=(equippedClass===b.dataset.id)?null:b.dataset.id;
+      saveEquip();
+      renderClassesScreen();
+    };
+  });
+}
+document.getElementById("btnClasses").onclick=()=>{ renderClassesScreen(); showScreen("classes"); };
+document.getElementById("btnClassBack").onclick=()=> showScreen("menu");
+
+loadProgress();
+refreshGemBadges();
+
+/* ============================ USERNAME (persisted locally) ============================ */
+const USERNAME_KEY = "police_game_username";
+function loadSavedUsername(){
+  try { return localStorage.getItem(USERNAME_KEY) || ""; } catch(e){ return ""; }
+}
+function saveUsername(name){
+  try { localStorage.setItem(USERNAME_KEY, name); } catch(e){ /* storage unavailable, ignore */ }
+}
+const usernameInput = document.getElementById("usernameInput");
+document.getElementById("btnConfirmName").onclick = confirmName;
+usernameInput.addEventListener("keydown", e=>{ if(e.key==="Enter") confirmName(); });
+function confirmName(){
+  const v = usernameInput.value.trim();
+  username = v.length ? v : "Prisoner";
+  saveUsername(username);
+  document.getElementById("welcomeLine").textContent = "welcome, " + username;
+  showScreen("menu");
+}
+document.getElementById("btnChangeName").onclick = ()=>{
+  usernameInput.value = username;
+  showScreen("username");
+};
+(function initUsername(){
+  const saved = loadSavedUsername();
+  if(saved){
+    username = saved;
+    usernameInput.value = saved;
+    document.getElementById("welcomeLine").textContent = "welcome back, " + username;
+    showScreen("menu");
+  } else {
+    showScreen("username");
+  }
+})();
+
+document.getElementById("btnSingle").onclick = ()=>{ isMultiplayer=false; maybeTutorialThen(startSingleplayer); };
+document.getElementById("btnHowTo").onclick = ()=>{ tutFromMenu=true; openTutorial(); };
+let mpTargetChapter=1;
+document.getElementById("btnMulti").onclick = ()=>{ mpTargetChapter=1; showScreen("mp"); };
+document.getElementById("btnCh2Single").onclick = ()=> startChapter2Singleplayer();
+document.getElementById("btnCh2Multi").onclick = ()=>{ mpTargetChapter=2; showScreen("mp"); };
+document.getElementById("btnMpBack").onclick = ()=> showScreen(mpTargetChapter===2 ? "ch2menu" : "menu");
+
+let firstTimePlaying = true;
+function maybeTutorialThen(fn){
+  if(firstTimePlaying){ pendingAfterTutorial = fn; openTutorial(); }
+  else fn();
+}
+
+/* ============================ TUTORIAL ============================ */
+const tutSteps = [
+  "<b>Day (45s):</b> You start locked in your cell each day. Explore it, but you can't escape yet.",
+  "<b>Night falls (4 min):</b> Your cell door opens. It's a total blackout — you only see through your flashlight cone.",
+  "<b>Keys &amp; Locks:</b> Find the <b style='color:#e8443a'>red key</b> anywhere in the prison (never inside a locked room). It opens a red gate leading to the <b style='color:#3d7bff'>blue key</b>, which opens a gate to the <b style='color:#f3c93d'>yellow key</b>, which opens a gate to the <b style='color:#3ddc84'>green key</b>.",
+  "<b>Wrench Machines:</b> On every even-numbered night, a machine spawns. Hold SPACE next to it to repair it (100s the first time, 120s the next) and earn a coin.",
+  "<b>Coins:</b> You need <b>4 coins</b> to attempt escape — 2 are hidden somewhere out in the station, 2 come from wrench machines.",
+  "<b>Password digits:</b> 5 glowing numbers are scattered through the prison. Each one tells you its position in the exit password.",
+  "<b>The Guard:</b> A police bot patrols and hunts you at night. Getting caught costs a life and throws you into a disorienting 5-second 'Frustration' state before you're sent back to your safe cell. You have 3 lives.",
+  "<b>Escape:</b> Once you have all 4 coins you're teleported to your cell with 1 minute 30 seconds to reach the glowing green EXIT door and enter the correct 5-digit password!"
+];
+let tutIndex = 0, tutFromMenu=false, pendingAfterTutorial=null;
+function openTutorial(){ tutIndex=0; renderTut(); showScreen("tutorial"); }
+function renderTut(){
+  document.getElementById("tutText").innerHTML = tutSteps[tutIndex];
+  const dots = document.getElementById("tutDots"); dots.innerHTML="";
+  tutSteps.forEach((_,i)=>{
+    const d=document.createElement("div"); d.className="dot"+(i===tutIndex?" active":"");
+    dots.appendChild(d);
+  });
+  document.getElementById("btnTutNext").textContent = (tutIndex===tutSteps.length-1) ? "Let's go" : "Next";
+}
+document.getElementById("btnTutNext").onclick = ()=>{
+  if(tutIndex < tutSteps.length-1){ tutIndex++; renderTut(); }
+  else finishTutorial();
+};
+document.getElementById("btnTutSkip").onclick = finishTutorial;
+function finishTutorial(){
+  firstTimePlaying = false;
+  if(tutFromMenu){ tutFromMenu=false; showScreen("menu"); return; }
+  showScreen("menu"); // brief
+  if(pendingAfterTutorial){ const fn=pendingAfterTutorial; pendingAfterTutorial=null; fn(); }
+}
+
+/* ============================ REAL MULTIPLAYER (PeerJS, no server signup needed) ============================ */
+let netPeer=null;         // this browser's Peer object
+let isHost=false;
+let hostConn=null;        // (client) DataConnection to the host
+let clientConns=[];       // (host) DataConnections to each joined player
+let remotePlayers={};     // id -> {username,x,y,facing,lives,alive,holdingWrench}
+let catchCooldown={};     // id -> timestamp, prevents multi-hit per guard touch
+
+function randCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let c=""; for(let i=0;i<5;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function teardownNetwork(){
+  clientConns.forEach(c=>{ try{c.close();}catch(e){} });
+  if(hostConn){ try{hostConn.close();}catch(e){} }
+  if(netPeer){ try{netPeer.destroy();}catch(e){} }
+  netPeer=null; hostConn=null; clientConns=[]; remotePlayers={}; isHost=false; catchCooldown={};
+}
+function broadcast(data){ clientConns.forEach(c=>{ try{ c.send(data); }catch(e){} }); }
+function sendToHost(data){ if(hostConn){ try{ hostConn.send(data); }catch(e){} } }
+
+document.getElementById("btnCreateParty").onclick = ()=>{
+  teardownNetwork();
+  partyCode = randCode();
+  showMsg("Opening party...", 1500);
+  netPeer = new Peer(partyCode);
+  netPeer.on("open", id=>{
+    isHost=true;
+    partySlots=[{name:username, cls:equippedClass}];
+    renderLobby();
+    showScreen("mp-lobby");
+  });
+  netPeer.on("connection", conn=>{
+    if(clientConns.length>=3){ conn.close(); return; }
+    conn.on("open", ()=>{
+      clientConns.push(conn);
+      const uname = (conn.metadata && conn.metadata.username) ? conn.metadata.username : "Player";
+      conn._username = uname;
+      conn._cls = (conn.metadata && conn.metadata.cls) || null;
+      remotePlayers[conn.peer] = {username:uname, x:0, y:0, facing:{x:0,y:1}, lives:3, alive:true, holdingWrench:false,
+        ch1Won: !!(conn.metadata && conn.metadata.ch1)};
+      partySlots = [{name:username, cls:equippedClass}, ...clientConns.map(c=>({name:c._username, cls:c._cls}))];
+      renderLobby();
+      broadcast({type:"roster", names:partySlots});
+      showMsg(uname+" joined the party.");
+    });
+    conn.on("data", data=> handleHostReceive(conn, data));
+    conn.on("close", ()=>{
+      clientConns = clientConns.filter(c=>c!==conn);
+      delete remotePlayers[conn.peer];
+      partySlots = [{name:username, cls:equippedClass}, ...clientConns.map(c=>({name:c._username, cls:c._cls}))];
+      renderLobby();
+      broadcast({type:"roster", names:partySlots});
+    });
+  });
+  netPeer.on("error", err=>{
+    showMsg("Party error ("+err.type+"). Try again.", 4000);
+  });
+};
+
+document.getElementById("btnJoinParty").onclick = ()=> showScreen("mp-join");
+document.getElementById("btnJoinBack").onclick = ()=> showScreen("mp");
+document.getElementById("btnDoJoin").onclick = ()=>{
+  const code = document.getElementById("joinInput").value.trim().toUpperCase();
+  if(code.length!==5){ alert("Enter the 5-character code your host shared."); return; }
+  teardownNetwork();
+  partyCode = code;
+  showMsg("Connecting...", 2000);
+  netPeer = new Peer();
+  netPeer.on("open", ()=>{
+    hostConn = netPeer.connect(code, {metadata:{username, ch1:hasWonChapter1, cls:equippedClass}, reliable:true});
+    hostConn.on("open", ()=>{
+      isHost=false;
+      partySlots=[{name:username, cls:equippedClass}];
+      renderLobby();
+      showScreen("mp-lobby");
+    });
+    hostConn.on("data", data=> handleClientReceive(data));
+    hostConn.on("close", ()=>{
+      showMsg("Disconnected from host.", 4000);
+      showScreen("mp");
+    });
+  });
+  netPeer.on("error", err=>{
+    showMsg("Couldn't reach that party code. Double-check it and try again.", 4500);
+    showScreen("mp-join");
+  });
+};
+
+document.getElementById("btnLeaveParty").onclick = ()=>{ teardownNetwork(); showScreen("mp"); };
+document.getElementById("btnStartParty").onclick = ()=>{
+  if(!isHost){ showMsg("Only the host can start the game.", 2000); return; }
+  const seed = Math.floor(Math.random()*4294967295);
+  if(mpTargetChapter===2){
+    const everyoneReady = hasWonChapter1 && Object.values(remotePlayers).every(p=>p.ch1Won);
+    if(!everyoneReady){ showMsg("Everyone in the party needs at least one Chapter 1 win before starting Chapter 2.", 4500); return; }
+    broadcast({type:"start2", seed});
+    isMultiplayer=true;
+    beginMultiplayerChapter2(seed);
+    return;
+  }
+  broadcast({type:"start", seed});
+  isMultiplayer=true;
+  maybeTutorialThen(()=> beginMultiplayerGame(seed));
+};
+
+function renderLobby(){
+  document.getElementById("partyCodeDisplay").textContent = partyCode;
+  const box = document.getElementById("partySlots"); box.innerHTML="";
+  const icons={speedster:"⚡",agent:"🕵️",sneaky:"🥷",sleepy:"😴",detector:"📡",teleporter:"🌀",tank:"🛡️",
+    nightvision:"🌙",adrenaline:"💉",gamer:"🎮",engineer:"🔧",speaker:"📢"};
+  for(let i=0;i<4;i++){
+    const entry = partySlots[i];
+    const s = document.createElement("div");
+    s.className = "party-slot"+(entry?" filled":"");
+    if(entry){
+      const name = (typeof entry==="string") ? entry : entry.name;
+      const cls = (typeof entry==="string") ? null : entry.cls;
+      const clsLabel = cls ? (icons[cls]||"✨")+" "+cls : "no class";
+      s.innerHTML = "👤<br>"+name+"<br><span style='font-size:10px;color:var(--dim)'>"+clsLabel+"</span>";
+    } else {
+      s.innerHTML = "empty";
+    }
+    box.appendChild(s);
+  }
+  const startBtn = document.getElementById("btnStartParty");
+  startBtn.style.display = isHost ? "inline-block" : "none";
+}
+
+/* ---- host <-> client message handling ---- */
+function ch2SyncRemoteMaxLives(p){
+  p.maxLives = p.maxLives || 3;
+  if(p.equippedClass==="tank" && p.maxLives<4){
+    const wasFull = p.lives>=p.maxLives;
+    p.maxLives=4;
+    if(wasFull) p.lives=4;
+  } else if(p.equippedClass!=="tank" && p.maxLives>3){
+    p.maxLives=3;
+    if(p.lives>3) p.lives=3;
+  }
+}
+function handleHostReceive(conn, data){
+  const p = remotePlayers[conn.peer];
+  if(!p) return;
+  switch(data.type){
+    case "pos":
+      p.x=data.x; p.y=data.y; p.facing=data.facing; p.holdingWrench=!!data.holdingWrench;
+      p.equippedClass=data.equippedClass||null;
+      p.invisible=!!data.invisible;
+      ch2SyncRemoteMaxLives(p);
+      break;
+    case "ch2_pos":
+      p.x=data.x; p.y=data.y; p.facing=data.facing; p.equippedClass=data.equippedClass||null; p.invisible=!!data.invisible;
+      ch2SyncRemoteMaxLives(p);
+      if(typeof data.lives==="number" && data.lives>p.lives) p.lives=Math.min(p.maxLives,data.lives);
+      break;
+    case "ch2_drop":
+      if(ch2 && ch2.room && !ch2.room.isFinal){
+        ch2.room.items.push({id:"dropped_"+Date.now()+"_"+Math.floor(Math.random()*1000), type:data.itemType, x:data.x, y:data.y, pickupAt:Date.now()+3000});
+      }
+      break;
+    case "take_redkey": tryTakeRedKey(); break;
+    case "take_vaultkey": tryTakeVaultKey(data.color); break;
+    case "open_gate": tryOpenGate(data.color); break;
+    case "take_coin": tryTakeCoin(data.id); break;
+    case "take_digit": tryTakeDigit(data.idx); break;
+    case "take_gun":
+      if(gunPickup){
+        const bullets=gunPickup.bullets;
+        gunPickup=null;
+        try{ conn.send({type:"gun_credit", bullets}); }catch(e){}
+      }
+      break;
+    case "shoot": resolveShoot(data.x, data.y, data.facing); break;
+    case "submit_password": handlePasswordSubmit(data.code, conn); break;
+    case "tp_request": {
+      if(data.targetId==="HOST"){ showTeleportRequest(conn.peer, data.fromName); }
+      else {
+        const target=clientConns.find(c=>c.peer===data.targetId);
+        if(target){ try{ target.send({type:"tp_incoming", fromId:conn.peer, fromName:data.fromName}); }catch(e){} }
+      }
+      break;
+    }
+    case "tp_accept": {
+      if(data.fromId==="HOST"){ showMsg("They teleported to you!",2500); }
+      else {
+        const target=clientConns.find(c=>c.peer===data.fromId);
+        if(target){ try{ target.send({type:"tp_accepted"}); }catch(e){} }
+      }
+      break;
+    }
+  }
+}
+function handleClientReceive(data){
+  switch(data.type){
+    case "roster": partySlots=data.names; if(!gameActive) renderLobby(); break;
+    case "start": isMultiplayer=true; beginMultiplayerGame(data.seed); break;
+    case "start2": isMultiplayer=true; beginMultiplayerChapter2(data.seed); break;
+    case "state": applyStateSnapshot(data); break;
+    case "caught": applyLocalCatch(); break;
+    case "win": gameOver(true, data.text); break;
+    case "lose": gameOver(false, data.text); break;
+    case "msg": showMsg(data.text, data.dur||2500); break;
+    case "gun_credit":
+      myBullets += data.bullets;
+      sessionFlags.pickedGun=true;
+      showMsg("Picked up a gun with "+data.bullets+" bullet(s). Press E to shoot where you're facing.", 3500);
+      break;
+    case "tp_incoming": showTeleportRequest(data.fromId, data.fromName); break;
+    case "tp_accepted": showMsg("They teleported to you!",2500); break;
+    case "ch2_caught":
+      ch2Lives=Math.max(0,ch2Lives-1);
+      ch2Invuln=1.6;
+      showMsg("Caught! -1 heart.", 2000);
+      if(ch2Player && ch2.room){ ch2Player.x=ch2.room.entry.x*TILE; ch2Player.y=ch2.room.entry.y*TILE; }
+      updateCh2Hud();
+      break;
+  }
+}
+function myClientId(){ return netPeer ? netPeer.id : null; }
+
+function broadcastState(){
+  const players = {};
+  players["HOST"] = {username, x:player.x, y:player.y, facing, lives, alive:lives>0};
+  Object.keys(remotePlayers).forEach(id=>{
+    const p=remotePlayers[id];
+    players[id] = {username:p.username, x:p.x, y:p.y, facing:p.facing, lives:p.lives, alive:p.lives>0};
+  });
+  broadcast({
+    type:"state",
+    phase, phaseTimer, nightNum, coins,
+    heldKeys: {...heldKeys},
+    gates: vaultRooms.map(v=>({color:v.gate.color, open:v.gate.open})),
+    vaultKeysTaken: vaultRooms.map(v=> !!(v.keyInside && !v.keyPos)),
+    redKeyTaken: !redKeyPos,
+    coin1Taken: !coinCellPos1,
+    coin2Taken: !coinCellPos2,
+    digits: digitSpots.map(d=>d.collected),
+    wrench: wrenchMachine ? {x:wrenchMachine.x,y:wrenchMachine.y,progress:wrenchMachine.progress,required:wrenchMachine.required,done:wrenchMachine.done} : null,
+    gun: gunPickup ? {x:gunPickup.x,y:gunPickup.y,bullets:gunPickup.bullets} : null,
+    guard: {x:guard.x, y:guard.y, stunTimer:guard.stunTimer, chaseTargetId:guard.chaseTargetId},
+    players
+  });
+}
+function applyStateSnapshot(data){
+  const phaseChanged = data.phase !== phase;
+  phase=data.phase; phaseTimer=data.phaseTimer; nightNum=data.nightNum; coins=data.coins;
+  if(Object.values(data.players).some(p=>p.lives<3)) sessionFlags.anyoneLostLifeMP=true;
+  heldKeys = data.heldKeys;
+  data.gates.forEach(g=>{ const v=vaultRooms.find(v=>v.gate.color===g.color); if(v) v.gate.open=g.open; });
+  vaultRooms.forEach((v,i)=>{ if(data.vaultKeysTaken[i]) v.keyPos=null; });
+  if(data.redKeyTaken) redKeyPos=null;
+  if(data.coin1Taken) coinCellPos1=null;
+  if(data.coin2Taken) coinCellPos2=null;
+  digitSpots.forEach((d,i)=>{ if(data.digits[i]) d.collected=true; });
+  wrenchMachine = data.wrench ? {x:data.wrench.x,y:data.wrench.y,progress:data.wrench.progress,required:data.wrench.required,done:data.wrench.done} : null;
+  gunPickup = data.gun ? {x:data.gun.x,y:data.gun.y,bullets:data.gun.bullets} : null;
+  if(guard){ guard.x=data.guard.x; guard.y=data.guard.y; guard.stunTimer=data.guard.stunTimer; guard.chaseTargetId=data.guard.chaseTargetId; }
+  const myId = myClientId();
+  const nextRemote = {};
+  Object.keys(data.players).forEach(id=>{
+    if(id===myId) return; // that's me, skip
+    nextRemote[id] = data.players[id];
+  });
+  remotePlayers = nextRemote;
+  if(phaseChanged && (phase==="night" || phase==="day" || phase==="password") && player){
+    player.x=(safeRoom.x+1.5)*TILE; player.y=(safeRoom.y+1.5)*TILE;
+  }
+}
+
+/* ============================ GAME CONSTANTS ============================ */
+const TILE = 24;
+const COLS = 64, ROWS = 44;   // station tile grid (room-based layout, not a maze)
+const DAY_LEN = 45;
+const NIGHT_LEN = 240;
+const TRANS_LEN = 5;
+const FRUST_LEN = 5;
+const PASS_LEN = 90;
+
+const WALL=0, FLOOR=1;
+function mulberry32(a){
+  return function(){
+    let t=(a+=0x6D2B79F5);
+    t=Math.imul(t ^ t>>>15, t | 1);
+    t ^= t + Math.imul(t ^ t>>>7, t | 61);
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+let rand = Math.random;
+function seedRandom(seed){ rand = (seed==null) ? Math.random : mulberry32(seed>>>0); }
+let grid; // COLSxROWS, 0 wall 1 floor
+let safeRoom; // {x,y,w,h} tile rect
+let vaultRooms; // array of {x,y,w,h, gate:{x,y}, color}
+let safeRoomReserved, reservedVaultRects; // used only during generation to avoid overlap
+let redKeyPos, coinCellPos1, coinCellPos2;
+let gunPickup=null;   // {x,y,bullets} — one live pickup at a time, shared/global
+let myBullets=0;      // this player's personal ammo count
+let shotFlash=null;   // {x1,y1,x2,y2,ttl} local-only visual for the last shot fired
+let digitSpots; // [{x,y,idx,collected}]
+let passwordDigits; // array of 5 numbers
+let wrenchMachine; // {x,y,active,required,progress} or null
+
+/* ---------- Station generation: real rooms + wide hallways, not a maze ---------- */
+let stationRooms=[]; // decorative info for rendering (offices/holding area vibe)
+function carveRoom(rx,ry,rw,rh){
+  for(let x=rx;x<rx+rw;x++) for(let y=ry;y<ry+rh;y++){
+    if(x>0&&y>0&&x<COLS-1&&y<ROWS-1) grid[x][y]=FLOOR;
+  }
+}
+function isFloor(x,y){ return x>=0&&y>=0&&x<COLS&&y<ROWS&&grid[x][y]===FLOOR; }
+function rectsOverlap(a,b,pad){
+  return !(a.x+a.w+pad < b.x || b.x+b.w+pad < a.x || a.y+a.h+pad < b.y || b.y+b.h+pad < a.y);
+}
+function carveH(y,x1,x2,width){
+  const xa=Math.min(x1,x2), xb=Math.max(x1,x2);
+  for(let x=xa;x<=xb;x++) for(let w=0;w<width;w++) if(isInBounds(x,y+w)) grid[x][y+w]=FLOOR;
+}
+function carveV(x,y1,y2,width){
+  const ya=Math.min(y1,y2), yb=Math.max(y1,y2);
+  for(let y=ya;y<=yb;y++) for(let w=0;w<width;w++) if(isInBounds(x+w,y)) grid[x+w][y]=FLOOR;
+}
+function isInBounds(x,y){ return x>0&&y>0&&x<COLS-1&&y<ROWS-1; }
+function resealPerimeterExceptKeep(rx,ry,rw,rh,keepTiles){
+  // wipes a 1-tile ring around a room back to WALL, except the tiles we explicitly want open
+  // (the room's own interior + its door + its stub). This undoes any stray corridor tile that
+  // a wide hallway connector might have carved into the wall right next to a locked gate.
+  const keepSet = new Set(keepTiles.map(t=>t.x+","+t.y));
+  for(let x=rx-1;x<=rx+rw;x++){
+    for(let y=ry-1;y<=ry+rh;y++){
+      const inInterior = x>=rx && x<rx+rw && y>=ry && y<ry+rh;
+      if(inInterior) continue; // interior floor is untouched, it's the room itself
+      if(!keepSet.has(x+","+y) && isInBounds(x,y)) grid[x][y]=WALL;
+    }
+  }
+}
+function connectPoints(x1,y1,x2,y2){
+  // wide, straight hallway segments -- reads as a corridor between rooms, not a labyrinth
+  if(rand()<0.5){ carveH(y1,x1,x2,2); carveV(x2,y1,y2,2); }
+  else { carveV(x1,y1,y2,2); carveH(y2,x1,x2,2); }
+}
+function connectNarrow(x1,y1,x2,y2){
+  // single-tile-wide corridor that returns exactly the tiles it carved, so a doorway
+  // connector can never spill sideways into a room it's not supposed to touch
+  const tiles=[];
+  function mark(x,y){ if(isInBounds(x,y)){ grid[x][y]=FLOOR; tiles.push({x,y}); } }
+  if(rand()<0.5){
+    const xa=Math.min(x1,x2), xb=Math.max(x1,x2);
+    for(let x=xa;x<=xb;x++) mark(x,y1);
+    const ya=Math.min(y1,y2), yb=Math.max(y1,y2);
+    for(let y=ya;y<=yb;y++) mark(x2,y);
+  } else {
+    const ya=Math.min(y1,y2), yb=Math.max(y1,y2);
+    for(let y=ya;y<=yb;y++) mark(x1,y);
+    const xa=Math.min(x1,x2), xb=Math.max(x1,x2);
+    for(let x=xa;x<=xb;x++) mark(x,y2);
+  }
+  return tiles;
+}
+function generateGrid(){
+  grid = new Array(COLS);
+  for(let x=0;x<COLS;x++){ grid[x]=new Array(ROWS).fill(WALL); }
+  stationRooms=[];
+  let attempts=0;
+  const targetCount=15;
+  while(stationRooms.length<targetCount && attempts<800){
+    attempts++;
+    const w=5+Math.floor(rand()*5), h=4+Math.floor(rand()*4);
+    const x=3+Math.floor(rand()*(COLS-w-6));
+    const y=3+Math.floor(rand()*(ROWS-h-6));
+    const room={x,y,w,h};
+    if(rectsOverlap(room,safeRoomReserved,3)) continue;
+    if(reservedVaultRects.some(v=>rectsOverlap(room,v,3))) continue;
+    if(stationRooms.some(r=>rectsOverlap(room,r,2))) continue;
+    stationRooms.push(room);
+  }
+  stationRooms.forEach(r=>carveRoom(r.x,r.y,r.w,r.h));
+  // connect rooms with a minimum-spanning-tree walk so the whole station is reachable,
+  // plus a handful of extra hallway loops so it doesn't feel like one long corridor
+  const connected=[stationRooms[0]];
+  const remaining=stationRooms.slice(1);
+  function center(r){ return [Math.floor(r.x+r.w/2), Math.floor(r.y+r.h/2)]; }
+  while(remaining.length){
+    let best=null, bestDist=Infinity, bestIdx=-1;
+    for(const c of connected){
+      const [cx,cy]=center(c);
+      remaining.forEach((r,i)=>{
+        const [rx,ry]=center(r);
+        const d=Math.abs(cx-rx)+Math.abs(cy-ry);
+        if(d<bestDist){ bestDist=d; best=r; bestIdx=i; }
+      });
+    }
+    const [cx,cy]=center(connected[connected.length-1]);
+    const [rx,ry]=center(best);
+    connectPoints(cx,cy,rx,ry);
+    connected.push(best);
+    remaining.splice(bestIdx,1);
+  }
+  for(let i=0;i<5;i++){
+    const a=stationRooms[Math.floor(rand()*stationRooms.length)];
+    const b=stationRooms[Math.floor(rand()*stationRooms.length)];
+    if(a!==b){ const [ax,ay]=center(a), [bx,by]=center(b); connectPoints(ax,ay,bx,by); }
+  }
+  stationRooms.forEach(r=>{
+    r.tint = Math.floor(rand()*3);
+    r.desks = [];
+    const deskCount = rand()<0.6 ? 1+Math.floor(rand()*2) : 0;
+    for(let i=0;i<deskCount;i++){
+      r.desks.push({dx: 1+Math.floor(rand()*Math.max(1,r.w-3)), dy: 1+Math.floor(rand()*Math.max(1,r.h-3))});
+    }
+  });
+}
+
+function inRect(x,y,r){ return x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h; }
+function inAnyVault(x,y){ return vaultRooms.some(v=>inRect(x,y,v)); }
+
+function randomFloorTile(avoidRects){
+  let tries=0;
+  while(tries<3000){
+    tries++;
+    const x=1+Math.floor(rand()*(COLS-2));
+    const y=1+Math.floor(rand()*(ROWS-2));
+    if(!isFloor(x,y)) continue;
+    if(avoidRects && avoidRects.some(r=>inRect(x,y,r))) continue;
+    return {x,y};
+  }
+  return {x:Math.floor(COLS/2), y:Math.floor(ROWS/2)};
+}
+function randomFarFloorTile(avoidRects, fromX, fromY, minDistTiles){
+  let best=null, bestDist=-1;
+  for(let tries=0; tries<400; tries++){
+    const t = randomFloorTile(avoidRects);
+    const d = Math.hypot(t.x-fromX, t.y-fromY);
+    if(d>=minDistTiles) return t;
+    if(d>bestDist){ bestDist=d; best=t; }
+  }
+  return best; // fall back to the farthest one we found, even if it's short of the target distance
+}
+
+function buildMap(){
+  // reserve the cell and the 4 vault footprints BEFORE generating station rooms
+  // so the random office/holding rooms never overlap them
+  safeRoom = {x:2,y:2,w:7,h:6};
+  const safeRoomReservedLocal = {x:safeRoom.x-1,y:safeRoom.y-1,w:safeRoom.w+2,h:safeRoom.h+2};
+  const anchors=[
+    {x:COLS-10,y:3},
+    {x:COLS-10,y:Math.floor(ROWS/2)-3},
+    {x:3,y:ROWS-9},
+    {x:Math.floor(COLS/2)+2,y:ROWS-8}
+  ];
+  const reservedVaultRectsLocal = anchors.map(a=>({x:a.x-2,y:a.y-1,w:5+3,h:4+2}));
+  safeRoomReserved = safeRoomReservedLocal;
+  reservedVaultRects = reservedVaultRectsLocal;
+
+  generateGrid(); // builds the open station: many rooms + wide connecting hallways
+
+  // carve the cell
+  carveRoom(safeRoom.x, safeRoom.y, safeRoom.w, safeRoom.h);
+  const cellDoor = {x:safeRoom.x+safeRoom.w, y:safeRoom.y+3};
+  const cellStub = {x:cellDoor.x+1, y:cellDoor.y};
+  grid[cellDoor.x][cellDoor.y] = FLOOR;
+  grid[cellStub.x][cellStub.y] = FLOOR;
+  // connect the cell doorway into the nearest station hallway/room
+  const nearestToCell = stationRooms.reduce((best,r)=>{
+    const d=Math.abs((r.x+r.w/2)-cellDoor.x)+Math.abs((r.y+r.h/2)-cellDoor.y);
+    return (!best||d<best.d) ? {r,d} : best;
+  },null).r;
+  const corridorTiles1 = connectNarrow(cellStub.x, cellStub.y, Math.floor(nearestToCell.x+nearestToCell.w/2), Math.floor(nearestToCell.y+nearestToCell.h/2));
+  resealPerimeterExceptKeep(safeRoom.x, safeRoom.y, safeRoom.w, safeRoom.h, [cellDoor, cellStub, ...corridorTiles1]);
+
+  // 4 vault rooms chained together, scattered around the far side of the station.
+  // Each gate spans the FULL width of its doorway (2 tiles) so there's no gap to sneak through.
+  const colors=["red","blue","yellow","green"];
+  vaultRooms=[];
+  colors.forEach((c,i)=>{
+    const a=anchors[i];
+    const room={x:a.x,y:a.y,w:5,h:4,color:c};
+    carveRoom(room.x,room.y,room.w,room.h);
+    const gx = room.x, gy = room.y+2;
+    const stubX = gx-1;
+    const gateTiles = [{x:gx,y:gy},{x:gx,y:gy+1}];
+    const stubTiles = [{x:stubX,y:gy},{x:stubX,y:gy+1}];
+    gateTiles.forEach(t=>grid[t.x][t.y]=FLOOR);
+    stubTiles.forEach(t=>grid[t.x][t.y]=FLOOR);
+    room.gate = {tiles:gateTiles, color:c, open:false};
+    vaultRooms.push(room);
+    // connect the gate's stub into the nearest station room so it's reachable
+    const nearestToVault = stationRooms.reduce((best,r)=>{
+      const d=Math.abs((r.x+r.w/2)-stubX)+Math.abs((r.y+r.h/2)-gy);
+      return (!best||d<best.d) ? {r,d} : best;
+    },null).r;
+    const corridorTiles = connectNarrow(stubX, gy, Math.floor(nearestToVault.x+nearestToVault.w/2), Math.floor(nearestToVault.y+nearestToVault.h/2));
+    resealPerimeterExceptKeep(room.x, room.y, room.w, room.h, [...gateTiles, ...stubTiles, ...corridorTiles]);
+  });
+
+  // place keys: blue/yellow/green keys go INSIDE the room unlocked by the PREVIOUS gate
+  // vaultRooms[0].gate = red gate -> leads into vaultRooms[0], which contains BLUE key
+  // vaultRooms[1].gate = blue gate -> leads into vaultRooms[1], contains YELLOW key
+  // vaultRooms[2].gate = yellow gate -> vaultRooms[2] contains GREEN key
+  // vaultRooms[3].gate = green gate -> final vault (bonus / flavor only)
+  vaultRooms[0].gate.color="red";
+  vaultRooms[0].keyInside="blue";
+  vaultRooms[1].gate.color="blue";
+  vaultRooms[1].keyInside="yellow";
+  vaultRooms[2].gate.color="yellow";
+  vaultRooms[2].keyInside="green";
+  vaultRooms[3].gate.color="green";
+  vaultRooms[3].keyInside=null;
+
+  vaultRooms.forEach(r=>{
+    if(r.keyInside){
+      r.keyPos = {x:r.x+Math.floor(r.w/2), y:r.y+Math.floor(r.h/2), color:r.keyInside};
+    }
+  });
+
+  // red key: anywhere EXCEPT inside any vault or the safe room
+  redKeyPos = randomFloorTile([safeRoom,...vaultRooms]);
+
+  // 2 coins hidden somewhere out in the station (not in the cell, not in a locked vault)
+  coinCellPos1 = randomFloorTile([safeRoom,...vaultRooms]);
+  coinCellPos2 = randomFloorTile([safeRoom,...vaultRooms,{x:coinCellPos1.x-1,y:coinCellPos1.y-1,w:3,h:3}]);
+
+  // 5 password digit pickups scattered in the open station (not in vaults/cell)
+  digitSpots=[];
+  const order=[0,1,2,3,4].sort(()=>rand()-0.5);
+  for(let i=0;i<5;i++){
+    const t=randomFloorTile([safeRoom,...vaultRooms,...digitSpots.map(d=>({x:d.x,y:d.y,w:1,h:1}))]);
+    digitSpots.push({x:t.x,y:t.y, idx:order[i], collected:false});
+  }
+  passwordDigits = [Math.floor(rand()*10),Math.floor(rand()*10),Math.floor(rand()*10),
+                    Math.floor(rand()*10),Math.floor(rand()*10)];
+}
+
+/* ============================ GAME STATE ============================ */
+let canvas, ctx;
+let maskCanvas, maskCtx; // offscreen darkness layer for the flashlight effect
+let player, guard;
+let keys={}; // pressed keys
+let joystickVec={x:0,y:0}; // mobile analog stick input
+let heldKeys={red:false,blue:false,yellow:false,green:false};
+let coins=0;
+let lives=3;
+let maxLives=3;
+let invisibleTimer=0;
+let classAbilityCooldown=0;
+let playerBaseSpeed=130, ch2BaseSpeed=130;
+let classDetectorRevealTimer=0;
+const ABILITY_CLASSES=["sneaky","detector","teleporter","adrenaline","gamer","speaker"];
+function updateAbilityButton(){
+  const btn=document.getElementById("btnClassAbility");
+  if(!btn) return;
+  if(ABILITY_CLASSES.indexOf(equippedClass)<0){
+    btn.style.display="none"; return;
+  }
+  btn.style.display="flex";
+  const icons={sneaky:"🥷",detector:"📡",teleporter:"🌀",adrenaline:"💉",gamer:"🎮",speaker:"📢"};
+  btn.textContent = icons[equippedClass];
+}
+let adrenalineTimer=0;
+let speakerDecoy=null; // {x,y,timeLeft}
+function dropDecoySpeaker(){
+  classAbilityCooldown=45;
+  const x = gameMode==="ch2" ? ch2Player.x : player.x;
+  const y = gameMode==="ch2" ? ch2Player.y : player.y;
+  speakerDecoy={x,y,timeLeft:3};
+  showMsg("Decoy speaker placed — the guard will come looking!",2000);
+}
+
+/* ---- Chicken Jump (Gamer class, just for fun, no gameplay effect) ---- */
+let cjActive=false, cjAnim=null, cjChickenY=0, cjVelY=0, cjBlocks=[], cjScore=0, cjLastSpawn=0, cjLastTime=0;
+function openChickenJump(){
+  cjActive=true; cjChickenY=0; cjVelY=0; cjScore=0; cjLastSpawn=0;
+  const area=document.getElementById("cjPlayArea");
+  area.querySelectorAll(".cjBlock").forEach(b=>b.remove());
+  cjBlocks=[];
+  document.getElementById("cjScore").textContent="Score: 0";
+  document.getElementById("chickenJumpOverlay").style.display="flex";
+  cjLastTime=performance.now();
+  if(cjAnim) cancelAnimationFrame(cjAnim);
+  cjAnim=requestAnimationFrame(cjLoop);
+}
+function cjJump(){
+  if(cjActive && cjChickenY<=0.5) cjVelY=340;
+}
+function cjEnd(){
+  cjActive=false;
+  if(cjAnim) cancelAnimationFrame(cjAnim);
+  document.getElementById("chickenJumpOverlay").style.display="none";
+}
+function cjLoop(t){
+  if(!cjActive) return;
+  const dt=Math.min(0.05,(t-cjLastTime)/1000);
+  cjLastTime=t;
+  cjVelY-=900*dt;
+  cjChickenY=Math.max(0, cjChickenY+cjVelY*dt);
+  if(cjChickenY<=0){ cjChickenY=0; cjVelY=0; }
+  document.getElementById("cjChicken").style.bottom=(10+cjChickenY)+"px";
+
+  cjLastSpawn+=dt;
+  if(cjLastSpawn>1.1){
+    cjLastSpawn=0;
+    const area=document.getElementById("cjPlayArea");
+    const b=document.createElement("div"); b.className="cjBlock"; b.style.left="300px";
+    area.appendChild(b);
+    cjBlocks.push({el:b, x:300});
+  }
+  for(let i=cjBlocks.length-1;i>=0;i--){
+    const b=cjBlocks[i];
+    b.x-=220*dt;
+    b.el.style.left=b.x+"px";
+    if(b.x<-20){ b.el.remove(); cjBlocks.splice(i,1); cjScore++; document.getElementById("cjScore").textContent="Score: "+cjScore; continue; }
+    if(b.x<44 && b.x>0 && cjChickenY<20){
+      showMsg("Chicken Jump — final score: "+cjScore, 2800);
+      cjEnd();
+      return;
+    }
+  }
+  cjAnim=requestAnimationFrame(cjLoop);
+}
+(function(){
+  const area=document.getElementById("cjPlayArea");
+  area.addEventListener("touchstart", e=>{ e.preventDefault(); cjJump(); }, {passive:false});
+  area.addEventListener("mousedown", ()=>cjJump());
+  document.getElementById("btnCjStop").onclick=()=>cjEnd();
+})();
+
+function useClassAbility(){
+  if(!equippedClass) return;
+  if(equippedClass!=="gamer" && classAbilityCooldown>0){ showMsg("Ability on cooldown ("+Math.ceil(classAbilityCooldown)+"s).",1300); return; }
+  if(equippedClass==="sneaky"){
+    invisibleTimer=5; classAbilityCooldown=45;
+    showMsg("You're invisible for 5 seconds!",2000);
+  } else if(equippedClass==="detector"){
+    classAbilityCooldown=60;
+    if(gameMode==="ch2"){ ch2DetectorRevealTimer=8; } else { classDetectorRevealTimer=8; }
+    showMsg("Guard revealed for 8 seconds.",2000);
+  } else if(equippedClass==="teleporter"){
+    openTeleportPanel();
+  } else if(equippedClass==="adrenaline"){
+    adrenalineTimer=4; classAbilityCooldown=30;
+    showMsg("Adrenaline rush — 60% faster for 4 seconds!",2000);
+  } else if(equippedClass==="speaker"){
+    dropDecoySpeaker();
+  } else if(equippedClass==="gamer"){
+    openChickenJump();
+  }
+}
+(function(){
+  const btn=document.getElementById("btnClassAbility");
+  btn.onclick=()=>useClassAbility();
+  btn.addEventListener("touchstart", e=>{ e.preventDefault(); useClassAbility(); }, {passive:false});
+})();
+
+/* ---- teleporter ---- */
+function openTeleportPanel(){
+  const ids=Object.keys(remotePlayers);
+  if(!isMultiplayer || ids.length===0){ showMsg("No teammates to teleport to.",1800); return; }
+  const list=document.getElementById("teleportList"); list.innerHTML="";
+  ids.forEach(id=>{
+    const p=remotePlayers[id];
+    const row=document.createElement("div"); row.className="teleportRow";
+    const nameSpan=document.createElement("span"); nameSpan.textContent=p.username||"Player";
+    const btnWrap=document.createElement("div");
+    const toBtn=document.createElement("button"); toBtn.className="secondary"; toBtn.textContent="Go to them";
+    toBtn.onclick=()=>{ teleportSelfTo(id); document.getElementById("teleportPanel").style.display="none"; };
+    const reqBtn=document.createElement("button"); reqBtn.textContent="Request here"; reqBtn.style.marginLeft="6px";
+    reqBtn.onclick=()=>{ requestTeleport(id, p.username||"Player"); document.getElementById("teleportPanel").style.display="none"; };
+    btnWrap.appendChild(toBtn); btnWrap.appendChild(reqBtn);
+    row.appendChild(nameSpan); row.appendChild(btnWrap);
+    list.appendChild(row);
+  });
+  document.getElementById("teleportPanel").style.display="flex";
+}
+document.getElementById("btnTeleportClose").onclick=()=>{ document.getElementById("teleportPanel").style.display="none"; };
+function teleportSelfTo(id){
+  const p=remotePlayers[id];
+  if(!p || p.x==null) return;
+  classAbilityCooldown=60;
+  if(gameMode==="ch2"){ ch2Player.x=p.x; ch2Player.y=p.y; } else { player.x=p.x; player.y=p.y; }
+  showMsg("Teleported to "+(p.username||"teammate")+".",1800);
+}
+function requestTeleport(targetId, targetName){
+  classAbilityCooldown=60;
+  showMsg("Teleport request sent to "+targetName+"...",1800);
+  if(isHost){
+    const conn=clientConns.find(c=>c.peer===targetId);
+    if(conn){ try{ conn.send({type:"tp_incoming", fromId:"HOST", fromName:username}); }catch(e){} }
+  } else {
+    sendToHost({type:"tp_request", targetId, fromName:username});
+  }
+}
+let pendingTpFrom=null;
+function showTeleportRequest(fromId, fromName){
+  pendingTpFrom=fromId;
+  document.getElementById("teleportReqText").textContent = fromName+" wants you to teleport to them";
+  document.getElementById("teleportRequestPopup").style.display="flex";
+}
+document.getElementById("btnTeleportAccept").onclick=()=>{
+  document.getElementById("teleportRequestPopup").style.display="none";
+  const fromId=pendingTpFrom; pendingTpFrom=null;
+  if(!fromId) return;
+  const pos = (fromId==="HOST") ? (isHost?{x:player.x,y:player.y}:remotePlayers["HOST"]) : remotePlayers[fromId];
+  if(pos && pos.x!=null){
+    if(gameMode==="ch2"){ ch2Player.x=pos.x; ch2Player.y=pos.y; } else { player.x=pos.x; player.y=pos.y; }
+    showMsg("Teleported!",1600);
+  }
+  if(isHost){
+    if(fromId!=="HOST"){
+      const conn=clientConns.find(c=>c.peer===fromId);
+      if(conn){ try{ conn.send({type:"tp_accepted"}); }catch(e){} }
+    }
+  } else {
+    sendToHost({type:"tp_accept", fromId});
+  }
+};
+document.getElementById("btnTeleportDecline").onclick=()=>{
+  document.getElementById("teleportRequestPopup").style.display="none";
+  pendingTpFrom=null;
+};
+let nightNum=0;
+let phase="day"; // day, transition, night, frustration, password, ended
+let phaseTimer=DAY_LEN;
+let facing={x:0,y:1};
+let lastTime=0;
+let invuln=0;
+let frustTimer=0; // local-only "just got caught" state, doesn't pause the shared day/night clock
+let wrenchIndex=0; // how many even nights with a machine have occurred
+let machinesCompleted=0;
+let gameActive=false;
+let sessionFlags={};
+function resetSessionFlags(){
+  sessionFlags = {
+    lostLife:false,
+    pickedGun:false,
+    leftCellThisNight:true, // starts true; set false once player actually leaves during a night
+    chaseStreak:0,
+    wasteGun:null,          // {remaining, anyHit} while tracking a fresh 3-bullet gun
+    fullPartyThisSession:false,
+    anyoneLostLifeMP:false
+  };
+}
+let animId=null;
+let netSendTimer=0, netBroadcastTimer=0;
+
+function startSingleplayer(){
+  isMultiplayer=false; isHost=false;
+  seedRandom(null);
+  startGameCore();
+}
+function beginMultiplayerGame(seed){
+  seedRandom(seed);
+  startGameCore();
+}
+function startGameCore(){
+  gameMode="ch1";
+  document.getElementById("hud").style.display="";
+  document.getElementById("hud2").style.display="none";
+  document.getElementById("inventoryBar").style.display="none";
+  buildMap();
+  playerBaseSpeed = equippedClass==="speedster" ? 130*1.2 : 130;
+  player = {x:(safeRoom.x+1.5)*TILE, y:(safeRoom.y+1.5)*TILE, speed: playerBaseSpeed};
+  const gSpawn = randomFloorTile([safeRoom,...vaultRooms]);
+  guard = {x:(gSpawn.x+0.5)*TILE, y:(gSpawn.y+0.5)*TILE, speed:100,
+           path:[], target:null, mode:"patrol", repathTimer:0, stunTimer:0, chaseTargetId:null};
+  coins=0; maxLives=(equippedClass==="tank")?4:3; lives=maxLives; nightNum=0;
+  wrenchIndex=0; machinesCompleted=0; wrenchMachine=null;
+  gunPickup=null; myBullets=(equippedClass==="agent")?(1+Math.floor(Math.random()*3)):0; shotFlash=null;
+  invisibleTimer=0; classAbilityCooldown=0;
+  heldKeys={red:false,blue:false,yellow:false,green:false};
+  digitSpots.forEach(d=>d.collected=false);
+  phase="day"; phaseTimer=DAY_LEN; invuln=0;
+  gameActive=true;
+  netSendTimer=0; netBroadcastTimer=0;
+  Object.keys(remotePlayers).forEach(id=>{
+    remotePlayers[id].lives=3; remotePlayers[id].alive=true; remotePlayers[id].holdingWrench=false;
+  });
+  resetSessionFlags();
+  sessionFlags.usedClass = !!equippedClass;
+  updateAbilityButton();
+  if(isMultiplayer && (1+Object.keys(remotePlayers).length)>=4){
+    sessionFlags.fullPartyThisSession=true;
+    unlockAchievement("real_crew");
+  }
+  showScreen("game");
+  setupCanvas();
+  updateHud();
+  showMsg(isMultiplayer ? "Day 1 — explore your cell with your crew. It's locked... for now." : "Day 1 — explore your cell. It's locked... for now.");
+  lastTime=performance.now();
+  if(animId) cancelAnimationFrame(animId);
+  animId=requestAnimationFrame(loop);
+}
+
+function setupCanvas(){
+  canvas=document.getElementById("gameCanvas");
+  ctx=canvas.getContext("2d");
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.onresize=resize;
+}
+
+/* ============================ INPUT ============================ */
+window.addEventListener("keydown", e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(e.key.toLowerCase())) e.preventDefault();
+});
+window.addEventListener("keyup", e=>{ keys[e.key.toLowerCase()]=false; });
+
+/* ---- mobile touch controls ---- */
+function bindHold(id, keyName){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const start=ev=>{ ev.preventDefault(); keys[keyName]=true; };
+  const end=ev=>{ ev.preventDefault(); keys[keyName]=false; };
+  el.addEventListener("touchstart", start, {passive:false});
+  el.addEventListener("touchend", end, {passive:false});
+  el.addEventListener("touchcancel", end, {passive:false});
+  el.addEventListener("mousedown", start);
+  el.addEventListener("mouseup", end);
+  el.addEventListener("mouseleave", end);
+}
+bindHold("btnWrenchMobile"," ");
+(function(){
+  const el=document.getElementById("btnShootMobile");
+  if(el){
+    const fire=ev=>{ ev.preventDefault(); if(gameActive){ if(gameMode==="ch2") ch2Shoot(); else shoot(); } };
+    el.addEventListener("touchstart", fire, {passive:false});
+    el.addEventListener("mousedown", fire);
+  }
+})();
+
+/* draggable analog joystick — writes into the same joystickVec the movement code reads */
+(function(){
+  const base=document.getElementById("joystickBase");
+  const knob=document.getElementById("joystickKnob");
+  if(!base||!knob) return;
+  const maxR=40;
+  let activeId=null;
+  function setKnob(dx,dy){
+    knob.style.left=(35+dx)+"px";
+    knob.style.top=(35+dy)+"px";
+  }
+  function resetKnob(){ setKnob(0,0); joystickVec.x=0; joystickVec.y=0; }
+  function handleMove(clientX, clientY){
+    const rect=base.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    let dx=clientX-cx, dy=clientY-cy;
+    const dist=Math.hypot(dx,dy);
+    if(dist>maxR){ dx=dx/dist*maxR; dy=dy/dist*maxR; }
+    setKnob(dx,dy);
+    const mag=Math.hypot(dx,dy);
+    if(mag>6){ joystickVec.x=dx/maxR; joystickVec.y=dy/maxR; }
+    else { joystickVec.x=0; joystickVec.y=0; }
+  }
+  base.addEventListener("touchstart", ev=>{
+    ev.preventDefault();
+    const t=ev.changedTouches[0]; activeId=t.identifier;
+    handleMove(t.clientX, t.clientY);
+  }, {passive:false});
+  base.addEventListener("touchmove", ev=>{
+    ev.preventDefault();
+    for(const t of ev.changedTouches){ if(t.identifier===activeId) handleMove(t.clientX, t.clientY); }
+  }, {passive:false});
+  const stop=ev=>{
+    ev.preventDefault();
+    for(const t of ev.changedTouches){ if(t.identifier===activeId){ activeId=null; resetKnob(); } }
+  };
+  base.addEventListener("touchend", stop, {passive:false});
+  base.addEventListener("touchcancel", stop, {passive:false});
+  // mouse support for desktop testing
+  let mouseDown=false;
+  base.addEventListener("mousedown", ev=>{ mouseDown=true; handleMove(ev.clientX, ev.clientY); });
+  window.addEventListener("mousemove", ev=>{ if(mouseDown) handleMove(ev.clientX, ev.clientY); });
+  window.addEventListener("mouseup", ()=>{ if(mouseDown){ mouseDown=false; resetKnob(); } });
+})();
+
+/* ============================ HELPERS ============================ */
+function showMsg(text, dur=2600){
+  const box=document.getElementById("msgBox");
+  box.textContent=text; box.classList.add("show");
+  clearTimeout(showMsg._t);
+  showMsg._t=setTimeout(()=>box.classList.remove("show"), dur);
+}
+function fmtTime(s){
+  s=Math.max(0,Math.ceil(s));
+  const m=Math.floor(s/60), sec=s%60;
+  return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+function updateHud(){
+  const hb=document.getElementById("heartsBox"); hb.innerHTML="";
+  for(let i=0;i<maxLives;i++){ const sp=document.createElement("span"); sp.textContent="♥";
+    if(i>=lives) sp.classList.add("lost"); hb.appendChild(sp); }
+  const kr=document.getElementById("keyring"); kr.innerHTML="";
+  [["red","#e8443a"],["blue","#3d7bff"],["yellow","#f3c93d"],["green","#3ddc84"]].forEach(([c,hex])=>{
+    const d=document.createElement("div"); d.className="keyicon"+(heldKeys[c]?" have":"");
+    d.style.background=hex; d.style.color=hex; kr.appendChild(d);
+  });
+  document.getElementById("coinCount").textContent=coins;
+  document.getElementById("nightNum").textContent=nightNum;
+  document.getElementById("ammoCount").textContent=myBullets;
+  const myGuardId = (!isMultiplayer || isHost) ? "HOST" : myClientId();
+  const beingChased = phase==="night" && guard && guard.chaseTargetId===myGuardId && lives>0;
+  document.getElementById("chaseEye").classList.toggle("show", !!beingChased);
+  const dl=document.getElementById("digitList");
+  dl.textContent = [0,1,2,3,4].map(i=>{
+    const s=digitSpots.find(d=>d.idx===i);
+    return (s&&s.collected) ? passwordDigits[i] : "?";
+  }).join(" ");
+}
+
+/* ============================ MAIN LOOP ============================ */
+function loop(t){
+  if(!gameActive) return;
+  const dt = Math.min(0.05,(t-lastTime)/1000);
+  lastTime=t;
+  update(dt);
+  render();
+  animId=requestAnimationFrame(loop);
+}
+
+function update(dt){
+  if(phase==="ended") return;
+  if(invuln>0) invuln-=dt;
+  if(shotFlash){ shotFlash.ttl-=dt; if(shotFlash.ttl<=0) shotFlash=null; }
+  if(classAbilityCooldown>0) classAbilityCooldown-=dt;
+  if(invisibleTimer>0) invisibleTimer-=dt;
+  if(adrenalineTimer>0){ adrenalineTimer-=dt; player.speed=playerBaseSpeed*1.6; if(adrenalineTimer<=0) player.speed=playerBaseSpeed; }
+  if(speakerDecoy){ speakerDecoy.timeLeft-=dt; if(speakerDecoy.timeLeft<=0) speakerDecoy=null; }
+  if(classDetectorRevealTimer>0) classDetectorRevealTimer-=dt;
+  if(frustTimer>0){
+    frustTimer-=dt;
+    if(frustTimer<=0) document.getElementById("frustOverlay").style.display="none";
+  }
+  const authoritative = !isMultiplayer || isHost;
+  const eliminated = isMultiplayer && lives<=0;
+  const canMove = frustTimer<=0 && !eliminated;
+
+  if(phase==="day"){
+    if(authoritative) phaseTimer-=dt;
+    if(canMove) movePlayerConfined(dt, safeRoom);
+    if(authoritative && phaseTimer<=0) beginTransition();
+  } else if(phase==="transition"){
+    if(authoritative){ phaseTimer-=dt; if(phaseTimer<=0) beginNight(); }
+  } else if(phase==="night"){
+    if(authoritative) phaseTimer-=dt;
+    if(canMove) movePlayerFree(dt);
+    if(authoritative) updateGuard(dt);
+    handleNightPickups(dt);
+    {
+      const ptx=Math.floor(player.x/TILE), pty=Math.floor(player.y/TILE);
+      if(!inRect(ptx,pty,safeRoom)) sessionFlags.leftCellThisNight=true;
+      const myGuardId = (!isMultiplayer || isHost) ? "HOST" : myClientId();
+      const beingChased = guard && guard.chaseTargetId===myGuardId && lives>0;
+      if(beingChased){
+        sessionFlags.chaseStreak += dt;
+        if(sessionFlags.chaseStreak>=180) unlockAchievement("too_slow");
+      } else {
+        sessionFlags.chaseStreak = 0;
+      }
+      if(coins===2 && vaultRooms.every(v=>v.gate.open) && digitSpots.every(d=>d.collected)){
+        unlockAchievement("speedrun");
+      }
+    }
+    if(authoritative){
+      checkCatchAllPlayers();
+      if(coins>=4) beginPasswordPhase();
+      else if(phaseTimer<=0) endNight();
+    }
+  } else if(phase==="password"){
+    if(authoritative){
+      phaseTimer-=dt;
+      if(phaseTimer<=0){ unlockAchievement("cant_enter_password"); triggerLose("Time ran out before the crew cracked the password."); }
+    }
+    if(canMove) movePlayerFree(dt);
+  }
+
+  if(isMultiplayer && gameActive){
+    netSendTimer-=dt;
+    if(netSendTimer<=0){
+      netSendTimer=0.1;
+      if(!isHost){
+        const wx = wrenchMachine ? (wrenchMachine.x+0.5)*TILE : 0, wy = wrenchMachine ? (wrenchMachine.y+0.5)*TILE : 0;
+        const holdingWrench = !!(wrenchMachine && !wrenchMachine.done && keys[" "] && Math.hypot(player.x-wx, player.y-wy) < TILE*1.4);
+        sendToHost({type:"pos", x:player.x, y:player.y, facing, holdingWrench, equippedClass, invisible: invisibleTimer>0});
+      }
+    }
+    if(isHost){
+      netBroadcastTimer-=dt;
+      if(netBroadcastTimer<=0){ netBroadcastTimer=0.12; broadcastState(); }
+    }
+  }
+
+  updateHud();
+  document.getElementById("phaseLabel").textContent =
+    phase==="day"?"DAY":phase==="transition"?"NIGHTFALL":phase==="night"?"NIGHT":
+    phase==="password"?"FINAL ESCAPE":"";
+  document.getElementById("timerLabel").textContent = fmtTime(phaseTimer);
+}
+
+function triggerLose(text){
+  if(isMultiplayer) broadcast({type:"lose", text});
+  gameOver(false, text);
+}
+
+function beginTransition(){
+  phase="transition"; phaseTimer=TRANS_LEN;
+  showMsg("Guards move you to your jail cell. Night is falling...", 4000);
+}
+function beginNight(){
+  nightNum++;
+  phase="night"; phaseTimer=NIGHT_LEN;
+  player.x=(safeRoom.x+1.5)*TILE; player.y=(safeRoom.y+1.5)*TILE;
+  const gSpawn = randomFloorTile([safeRoom,...vaultRooms]);
+  guard.x=(gSpawn.x+0.5)*TILE; guard.y=(gSpawn.y+0.5)*TILE;
+  guard.mode="patrol"; guard.path=[]; guard.stunTimer=0; guard.chaseTargetId=null;
+  sessionFlags.leftCellThisNight=false;
+  sessionFlags.chaseStreak=0;
+  if(nightNum%2===0){
+    wrenchIndex++;
+    const required = wrenchIndex===1?100:120;
+    const cellCx = safeRoom.x+safeRoom.w/2, cellCy = safeRoom.y+safeRoom.h/2;
+    const spot = randomFarFloorTile([safeRoom,...vaultRooms], cellCx, cellCy, 22);
+    const carriedProgress = wrenchMachine && wrenchMachine.leftoverProgress ? wrenchMachine.leftoverProgress : 0;
+    wrenchMachine = {x:spot.x,y:spot.y, required, progress:carriedProgress, done:false, graceLeft:45, active:false};
+    showMsg("A repair machine has appeared somewhere in the prison. Hold SPACE beside it.", 4500);
+  }
+  if(!gunPickup){
+    const spot = randomFloorTile([safeRoom,...vaultRooms]);
+    gunPickup = {x:spot.x, y:spot.y, bullets: 1+Math.floor(rand()*3)};
+  }
+  showMsg("Night "+nightNum+" — blackout. Watch your flashlight, avoid the guard.", 4000);
+}
+function endNight(){
+  if(wrenchMachine && !wrenchMachine.done){
+    wrenchMachine.leftoverProgress = wrenchMachine.progress;
+    if(wrenchMachine.progress>0) unlockAchievement("unfinished_machine");
+  }
+  if(!sessionFlags.leftCellThisNight) unlockAchievement("lonely");
+  phase="day"; phaseTimer=DAY_LEN;
+  player.x=(safeRoom.x+1.5)*TILE; player.y=(safeRoom.y+1.5)*TILE;
+  showMsg("Morning. Back in your cell.", 2500);
+}
+
+function beginPasswordPhase(){
+  phase="password"; phaseTimer=PASS_LEN;
+  player.x=(safeRoom.x+1.5)*TILE; player.y=(safeRoom.y+1.5)*TILE;
+  if(digitSpots.every(d=>!d.collected)) unlockAchievement("dont_know_password");
+  showMsg("All 4 coins collected! Rushed back to your cell — head to the glowing green EXIT door and enter the password. 1:30 on the clock!", 5500);
+}
+
+/* ---------- movement ---------- */
+function tileSolid(px,py){
+  const tx=Math.floor(px/TILE), ty=Math.floor(py/TILE);
+  if(!isFloor(tx,ty)) return true;
+  // closed gates block
+  for(const v of vaultRooms){
+    if(!v.gate.open && v.gate.tiles.some(t=>t.x===tx && t.y===ty)) return true;
+  }
+  return false;
+}
+function tryMove(entity, dx, dy, dt, confineRect){
+  const speed=entity.speed*dt;
+  let nx=entity.x+dx*speed, ny=entity.y+dy*speed;
+  const r=8;
+  const collides=(x,y)=>{
+    if(tileSolid(x-r,y-r)||tileSolid(x+r,y-r)||tileSolid(x-r,y+r)||tileSolid(x+r,y+r)) return true;
+    if(confineRect){
+      const tx=x/TILE, ty=y/TILE;
+      if(tx<confineRect.x+0.3||ty<confineRect.y+0.3||tx>confineRect.x+confineRect.w-0.3||ty>confineRect.y+confineRect.h-0.3) return true;
+    }
+    return false;
+  };
+  if(!collides(nx, entity.y)) entity.x=nx;
+  if(!collides(entity.x, ny)) entity.y=ny;
+}
+function movePlayerConfined(dt, rect){
+  let dx=0,dy=0;
+  if(keys["w"]||keys["arrowup"]) dy=-1;
+  if(keys["s"]||keys["arrowdown"]) dy=1;
+  if(keys["a"]||keys["arrowleft"]) dx=-1;
+  if(keys["d"]||keys["arrowright"]) dx=1;
+  if(joystickVec.x||joystickVec.y){ dx=joystickVec.x; dy=joystickVec.y; }
+  if(dx||dy){ const len=Math.hypot(dx,dy); dx/=len; dy/=len; facing={x:dx,y:dy}; tryMove(player,dx,dy,dt,rect); }
+}
+function movePlayerFree(dt){
+  let dx=0,dy=0;
+  if(keys["w"]||keys["arrowup"]) dy=-1;
+  if(keys["s"]||keys["arrowdown"]) dy=1;
+  if(keys["a"]||keys["arrowleft"]) dx=-1;
+  if(keys["d"]||keys["arrowright"]) dx=1;
+  if(joystickVec.x||joystickVec.y){ dx=joystickVec.x; dy=joystickVec.y; }
+  if(dx||dy){ const len=Math.hypot(dx,dy); dx/=len; dy/=len; facing={x:dx,y:dy}; tryMove(player,dx,dy,dt,null); }
+}
+
+/* ---------- pickups ---------- */
+function tileOfPos(px,py){ return {x:Math.floor(px/TILE), y:Math.floor(py/TILE)}; }
+function near(px,py,tx,ty,tiles=0.8){ return Math.hypot(px/TILE-tx-0.5, py/TILE-ty-0.5) < tiles; }
+
+let lastIntentSent = {};
+function sendIntentOnce(id, payload){
+  const now = performance.now();
+  if(lastIntentSent[id] && now-lastIntentSent[id] < 600) return;
+  lastIntentSent[id]=now;
+  sendToHost(payload);
+}
+function tryTakeRedKey(){
+  if(redKeyPos){ heldKeys.red=true; redKeyPos=null; showMsg("Picked up the RED key."); }
+}
+function tryTakeVaultKey(color){
+  const v=vaultRooms.find(v=>v.keyInside===color);
+  if(v && v.keyPos){ heldKeys[color]=true; v.keyPos=null; showMsg("Picked up the "+color.toUpperCase()+" key."); }
+}
+function tryOpenGate(color){
+  const v=vaultRooms.find(v=>v.gate.color===color);
+  if(v && !v.gate.open){
+    if(heldKeys[color]){
+      v.gate.open=true; heldKeys[color]=false;
+      showMsg("Used the "+color.toUpperCase()+" key — the gate creaks open. (key consumed)");
+    } else {
+      showMsg("This gate needs the "+color.toUpperCase()+" key.", 1500);
+    }
+  }
+}
+function tryTakeCoin(id){
+  if(id==="c1" && coinCellPos1){ coins++; coinCellPos1=null; showMsg("Found a coin stashed in the station! ("+coins+"/4)"); }
+  if(id==="c2" && coinCellPos2){ coins++; coinCellPos2=null; showMsg("Found another coin stashed in the station! ("+coins+"/4)"); }
+}
+function tryTakeDigit(idx){
+  const d=digitSpots.find(d=>d.idx===idx);
+  if(d && !d.collected){ d.collected=true; showMsg("Found a password digit! Position "+(idx+1)+" of the code is: "+passwordDigits[idx], 4000); }
+}
+function tryTakeGun(){
+  if(gunPickup){
+    myBullets += gunPickup.bullets;
+    sessionFlags.pickedGun=true;
+    if(gunPickup.bullets===3) sessionFlags.wasteGun={remaining:3, anyHit:false};
+    showMsg("Picked up a gun with "+gunPickup.bullets+" bullet(s). Press E to shoot where you're facing.", 3500);
+    gunPickup=null;
+  }
+}
+function shoot(){
+  if(phase!=="night" || myBullets<=0 || frustTimer>0 || (isMultiplayer && lives<=0)) return;
+  myBullets--;
+  unlockAchievement("first_shoot");
+  const x1=player.x, y1=player.y;
+  const x2=player.x+facing.x*320, y2=player.y+facing.y*320;
+  shotFlash = {x1,y1,x2,y2,ttl:0.18};
+  const wg = sessionFlags.wasteGun;
+  if(!isMultiplayer || isHost){
+    const hit = resolveShoot(player.x, player.y, facing);
+    if(wg){
+      wg.remaining--; if(hit) wg.anyHit=true;
+      if(wg.remaining<=0){ if(!wg.anyHit) unlockAchievement("what_waste"); sessionFlags.wasteGun=null; }
+    }
+  } else {
+    sendToHost({type:"shoot", x:player.x, y:player.y, facing});
+  }
+}
+function resolveShoot(px,py,dir){
+  const step=8, maxRange=320;
+  let x=px, y=py;
+  for(let d=0; d<maxRange; d+=step){
+    x+=dir.x*step; y+=dir.y*step;
+    if(tileSolid(x,y)) return false; // blocked by a wall, shot stops here
+    if(Math.hypot(x-guard.x, y-guard.y) < 22){
+      guard.stunTimer = 4;
+      showMsg("Direct hit — the guard is stunned!", 2500);
+      return true;
+    }
+  }
+  return false;
+}
+window.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase()==="e" && gameActive){
+    if(gameMode==="ch2") ch2Shoot(); else shoot();
+  }
+});
+
+function handleNightPickups(dt){
+  const authoritative = !isMultiplayer || isHost;
+  if(gunPickup && near(player.x,player.y,gunPickup.x,gunPickup.y)){
+    authoritative ? tryTakeGun() : sendIntentOnce("gun",{type:"take_gun"});
+  }
+  // coins hidden in the station
+  if(coinCellPos1 && near(player.x,player.y,coinCellPos1.x,coinCellPos1.y)){
+    authoritative ? tryTakeCoin("c1") : sendIntentOnce("c1",{type:"take_coin", id:"c1"});
+  }
+  if(coinCellPos2 && near(player.x,player.y,coinCellPos2.x,coinCellPos2.y)){
+    authoritative ? tryTakeCoin("c2") : sendIntentOnce("c2",{type:"take_coin", id:"c2"});
+  }
+  // red key
+  if(redKeyPos && near(player.x,player.y,redKeyPos.x,redKeyPos.y)){
+    authoritative ? tryTakeRedKey() : sendIntentOnce("redkey",{type:"take_redkey"});
+  }
+  // vault keys + gates
+  vaultRooms.forEach(v=>{
+    if(v.keyPos && near(player.x,player.y,v.keyPos.x,v.keyPos.y)){
+      authoritative ? tryTakeVaultKey(v.keyInside) : sendIntentOnce("vk_"+v.keyInside,{type:"take_vaultkey", color:v.keyInside});
+    }
+    if(!v.gate.open && v.gate.tiles.some(t=>near(player.x,player.y,t.x,t.y,0.9))){
+      if(authoritative){
+        tryOpenGate(v.gate.color);
+      } else if(heldKeys[v.gate.color]){
+        sendIntentOnce("gate_"+v.gate.color,{type:"open_gate", color:v.gate.color});
+      } else {
+        showMsg("This gate needs the "+v.gate.color.toUpperCase()+" key.", 1500);
+      }
+    }
+  });
+  // digits
+  digitSpots.forEach(d=>{
+    if(!d.collected && near(player.x,player.y,d.x,d.y)){
+      authoritative ? tryTakeDigit(d.idx) : sendIntentOnce("digit_"+d.idx,{type:"take_digit", idx:d.idx});
+    }
+  });
+  // wrench machine — progress is shared team progress, only the host advances it,
+  // and it counts if ANY connected player (not just you) is holding SPACE next to it
+  const wb=document.getElementById("wrenchBar"), wf=document.getElementById("wrenchFill");
+  if(wrenchMachine && !wrenchMachine.done){
+    const atMachine = near(player.x,player.y,wrenchMachine.x,wrenchMachine.y,1.0);
+    const holding = atMachine && keys[" "];
+    if(authoritative){
+      let anyoneHolding = holding;
+      let mult = (holding && equippedClass==="engineer") ? 1.25 : 1;
+      if(isMultiplayer){
+        const wx=(wrenchMachine.x+0.5)*TILE, wy=(wrenchMachine.y+0.5)*TILE;
+        Object.values(remotePlayers).forEach(p=>{
+          if(p.lives>0 && p.holdingWrench && Math.hypot(p.x-wx,p.y-wy) < TILE*1.4){
+            anyoneHolding=true;
+            if(p.equippedClass==="engineer" && mult<1.25) mult=1.25;
+          }
+        });
+      }
+      if(anyoneHolding){
+        wrenchMachine.progress += dt*mult;
+        if(wrenchMachine.progress>=wrenchMachine.required){
+          wrenchMachine.done=true; coins++; machinesCompleted++;
+          showMsg(isMultiplayer ? "Machine repaired! The crew earned a coin. ("+coins+"/4)" : "Machine repaired! You earned a coin. ("+coins+"/4)", 3500);
+        }
+      }
+    }
+    wb.style.display = atMachine ? "block":"none";
+    if(atMachine) wf.style.width = Math.min(100,(wrenchMachine.progress/wrenchMachine.required)*100)+"%";
+  } else {
+    wb.style.display="none";
+  }
+}
+
+/* ---------- guard AI (BFS pathfinding, no wall-sticking) ---------- */
+function neighborsOf(tx,ty){
+  const res=[];
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  for(const [dx,dy] of dirs){
+    const nx=tx+dx, ny=ty+dy;
+    if(isFloor(nx,ny)){
+      let blocked=false;
+      for(const v of vaultRooms) if(!v.gate.open && v.gate.tiles.some(t=>t.x===nx&&t.y===ny)) blocked=true;
+      if(!blocked) res.push([nx,ny]);
+    }
+  }
+  return res;
+}
+function bfsPath(sx,sy,tx,ty){
+  if(sx===tx&&sy===ty) return [];
+  const key=(x,y)=>x+","+y;
+  const visited=new Set([key(sx,sy)]);
+  const q=[[sx,sy]]; const prev={};
+  let qi=0;
+  while(qi<q.length){
+    const [cx,cy]=q[qi++];
+    if(cx===tx&&cy===ty) break;
+    for(const [nx,ny] of neighborsOf(cx,cy)){
+      const k=key(nx,ny);
+      if(!visited.has(k)){ visited.add(k); prev[k]=[cx,cy]; q.push([nx,ny]); }
+    }
+  }
+  const tk=key(tx,ty);
+  if(!visited.has(tk)) return null;
+  const path=[]; let cur=[tx,ty];
+  while(cur[0]!==sx||cur[1]!==sy){
+    path.unshift(cur);
+    cur=prev[key(cur[0],cur[1])];
+    if(!cur) return null;
+  }
+  return path;
+}
+function updateGuard(dt){
+  if(guard.stunTimer>0){
+    guard.stunTimer=Math.max(0,guard.stunTimer-dt);
+    return;
+  }
+  if(speakerDecoy){
+    const dd=Math.hypot(guard.x-speakerDecoy.x, guard.y-speakerDecoy.y);
+    if(dd<24){ speakerDecoy=null; showMsg("The guard smashed your decoy speaker!",1800); }
+  }
+  guard.repathTimer -= dt;
+  const gx=Math.floor(guard.x/TILE), gy=Math.floor(guard.y/TILE);
+
+  const candidates=[];
+  if(lives>0 && invisibleTimer<=0){
+    const tx=Math.floor(player.x/TILE), ty=Math.floor(player.y/TILE);
+    if(!inRect(tx,ty,safeRoom)) candidates.push({id:"HOST", x:player.x, y:player.y, cls:equippedClass});
+  }
+  Object.keys(remotePlayers).forEach(id=>{
+    const p=remotePlayers[id];
+    if(p.lives>0 && !p.invisible){
+      const tx=Math.floor(p.x/TILE), ty=Math.floor(p.y/TILE);
+      if(!inRect(tx,ty,safeRoom)) candidates.push({id, x:p.x, y:p.y, cls:p.equippedClass});
+    }
+  });
+
+  const detect = 250;
+  let nearest=null, nearestDist=Infinity;
+  candidates.forEach(c=>{
+    const d=Math.hypot(guard.x-c.x, guard.y-c.y);
+    const cDetect = c.cls==="sleepy" ? detect*0.65 : detect;
+    if(d<cDetect && d<nearestDist){ nearest=c; nearestDist=d; }
+  });
+  if(speakerDecoy){ nearest = {id:"__decoy__", x:speakerDecoy.x, y:speakerDecoy.y}; }
+  if(nearest){ guard.mode="chase"; }
+  else { guard.mode="patrol"; }
+  const targetChanged = guard.mode==="chase" && guard.chaseTargetId!==(nearest?nearest.id:null);
+  guard.chaseTargetId = nearest ? nearest.id : null;
+
+  // repath on a timer while chasing, but the moment a patrol path runs out (or the
+  // chase target switches to someone else), pick a new path immediately
+  if(guard.repathTimer<=0 || targetChanged || (guard.mode==="patrol" && guard.path.length===0)){
+    guard.repathTimer = guard.mode==="chase" ? 0.6 : 2.2;
+    let target;
+    if(guard.mode==="chase") target=[Math.floor(nearest.x/TILE), Math.floor(nearest.y/TILE)];
+    else target = [1+Math.floor(Math.random()*(COLS-2)), 1+Math.floor(Math.random()*(ROWS-2))];
+    if(!isFloor(target[0],target[1])) target=[gx,gy];
+    const p = bfsPath(gx,gy,target[0],target[1]);
+    guard.path = p || [];
+  }
+  // follow path
+  if(guard.path.length){
+    const next=guard.path[0];
+    const tx=(next[0]+0.5)*TILE, ty=(next[1]+0.5)*TILE;
+    const dx=tx-guard.x, dy=ty-guard.y;
+    const d=Math.hypot(dx,dy);
+    if(d<4){ guard.path.shift(); }
+    else {
+      const speed = (guard.mode==="chase"? guard.speed*1.35 : guard.speed)*dt;
+      guard.x += (dx/d)*speed;
+      guard.y += (dy/d)*speed;
+    }
+  }
+}
+function checkCatchAllPlayers(){
+  tryCatchPlayer("me", player.x, player.y);
+  Object.keys(remotePlayers).forEach(id=>{
+    const p=remotePlayers[id];
+    if(p.lives>0) tryCatchPlayer(id, p.x, p.y);
+  });
+}
+function tryCatchPlayer(id, px, py){
+  if(id==="me" && (lives<=0 || invuln>0 || invisibleTimer>0)) return;
+  if(id!=="me" && remotePlayers[id] && remotePlayers[id].invisible) return;
+  const tx=Math.floor(px/TILE), ty=Math.floor(py/TILE);
+  if(inRect(tx,ty,safeRoom)) return; // safe zone
+  const now = performance.now();
+  if(catchCooldown[id] && now-catchCooldown[id] < 1600) return;
+  const d = Math.hypot(guard.x-px, guard.y-py);
+  if(d < 20){
+    catchCooldown[id]=now;
+    if(id==="me"){
+      applyLocalCatch();
+    } else {
+      const p=remotePlayers[id];
+      p.lives=Math.max(0,p.lives-1);
+      sessionFlags.anyoneLostLifeMP=true;
+      const conn = clientConns.find(c=>c.peer===id);
+      if(conn){ try{ conn.send({type:"caught"}); }catch(e){} }
+    }
+    checkPartyLoss();
+  }
+}
+function applyLocalCatch(){
+  lives=Math.max(0,lives-1);
+  invuln=1.6;
+  frustTimer=FRUST_LEN;
+  sessionFlags.lostLife=true;
+  sessionFlags.anyoneLostLifeMP=true;
+  unlockAchievement("first_death");
+  document.getElementById("frustOverlay").style.display="block";
+  player.x=(safeRoom.x+1.5)*TILE; player.y=(safeRoom.y+1.5)*TILE;
+  if(lives<=0){
+    if(!isMultiplayer){ gameOver(false, "The guard caught you one time too many."); return; }
+    showMsg("You're out of lives — you'll spectate while your crew keeps going.", 4500);
+  } else {
+    showMsg("Caught! Rushed back to your cell.", 2500);
+  }
+}
+function checkPartyLoss(){
+  if(!isMultiplayer || !isHost) return;
+  const allDown = lives<=0 && Object.values(remotePlayers).every(p=>p.lives<=0);
+  if(allDown) triggerLose("The whole crew ran out of lives.");
+}
+
+/* ---------- password keypad ---------- */
+const padGrid=document.getElementById("padGrid");
+for(let i=0;i<9;i++){
+  const b=document.createElement("button"); b.textContent=i+1;
+  b.onclick=()=>padPress(String(i+1));
+  padGrid.appendChild(b);
+}
+{
+  const filler=document.createElement("div");
+  const zero=document.createElement("button"); zero.textContent="0"; zero.onclick=()=>padPress("0");
+  const back=document.createElement("button"); back.textContent="⌫"; back.className="secondary";
+  back.onclick=()=>{ enteredPass=enteredPass.slice(0,-1); refreshPassDisplay(); };
+  padGrid.appendChild(filler); padGrid.appendChild(zero); padGrid.appendChild(back);
+}
+let enteredPass="";
+function padPress(d){ if(enteredPass.length<5){ enteredPass+=d; refreshPassDisplay(); } }
+function refreshPassDisplay(){
+  document.getElementById("passDisplay").textContent =
+    (enteredPass+"_____").slice(0,5).split("").join(" ");
+}
+document.getElementById("padClear").onclick=()=>{ enteredPass=""; refreshPassDisplay(); };
+document.getElementById("padSubmit").onclick=()=>{
+  if(isMultiplayer && !isHost){
+    sendToHost({type:"submit_password", code:enteredPass});
+    showMsg("Submitted — checking with the crew...", 1500);
+    enteredPass=""; refreshPassDisplay();
+  } else {
+    handlePasswordSubmit(enteredPass, null);
+    enteredPass=""; refreshPassDisplay();
+  }
+};
+function handlePasswordSubmit(code, conn){
+  if(code===passwordDigits.join("")){
+    if(isMultiplayer) broadcast({type:"win"});
+    gameOver(true, isMultiplayer ? "The crew cracked the code and slipped past the gate. Freedom!" : "You cracked the code and slipped past the gate. Freedom!");
+  } else if(conn){
+    try{ conn.send({type:"msg", text:"Wrong code. Try again.", dur:1800}); }catch(e){}
+  } else {
+    showMsg("Wrong code. Try again.", 1800);
+  }
+}
+
+/* keypad auto-show when in password phase & near door */
+function maybeShowKeypad(){
+  const kp=document.getElementById("keypad");
+  if(phase==="password" && near(player.x,player.y, safeRoom.x+safeRoom.w, safeRoom.y+3, 1.4)){
+    kp.style.display="flex";
+  } else {
+    kp.style.display="none";
+  }
+}
+
+/* ============================ RENDER ============================ */
+function render(){
+  ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const camX = player.x - canvas.width/2;
+  const camY = player.y - canvas.height/2;
+
+  const nightMode = (phase==="night");
+
+  const x0=Math.max(0,Math.floor(camX/TILE)-1), x1=Math.min(COLS,Math.ceil((camX+canvas.width)/TILE)+1);
+  const y0=Math.max(0,Math.floor(camY/TILE)-1), y1=Math.min(ROWS,Math.ceil((camY+canvas.height)/TILE)+1);
+
+  const roomTints = ["#1c2230","#1a2028","#1e2530"];
+  function roomAt(x,y){
+    for(const r of stationRooms) if(inRect(x,y,r)) return r;
+    return null;
+  }
+  for(let x=x0;x<x1;x++){
+    for(let y=y0;y<y1;y++){
+      const sx=x*TILE-camX, sy=y*TILE-camY;
+      if(grid[x][y]===FLOOR){
+        const inSafe = inRect(x,y,safeRoom);
+        const room = roomAt(x,y);
+        if(inSafe) ctx.fillStyle="#1b2432";
+        else if(room) ctx.fillStyle=roomTints[room.tint];
+        else ctx.fillStyle="#14171e"; // hallway, slightly darker than rooms
+        ctx.fillRect(sx,sy,TILE,TILE);
+        ctx.strokeStyle="rgba(255,255,255,0.02)"; ctx.strokeRect(sx,sy,TILE,TILE);
+      } else {
+        ctx.fillStyle="#05060a"; ctx.fillRect(sx,sy,TILE,TILE);
+      }
+    }
+  }
+  // room outlines (reads like separate offices/holding rooms off a hallway)
+  ctx.strokeStyle="rgba(140,160,190,0.18)"; ctx.lineWidth=1.5;
+  stationRooms.forEach(r=>{
+    ctx.strokeRect(r.x*TILE-camX, r.y*TILE-camY, r.w*TILE, r.h*TILE);
+    (r.desks||[]).forEach(d=>{
+      ctx.fillStyle="rgba(120,90,60,0.55)";
+      ctx.fillRect((r.x+d.dx)*TILE-camX+2, (r.y+d.dy)*TILE-camY+2, TILE*1.4, TILE*0.8);
+    });
+  });
+  // safe room (cell) border
+  ctx.strokeStyle="#3d7bff"; ctx.lineWidth=2;
+  ctx.strokeRect(safeRoom.x*TILE-camX, safeRoom.y*TILE-camY, safeRoom.w*TILE, safeRoom.h*TILE);
+  ctx.lineWidth=1;
+  if(phase==="password"){
+    const dx=(safeRoom.x+safeRoom.w)*TILE-camX+TILE/2, dy=(safeRoom.y+3)*TILE-camY+TILE/2;
+    ctx.fillStyle="rgba(61,220,132,0.9)";
+    ctx.beginPath(); ctx.arc(dx,dy,14,0,Math.PI*2);
+    ctx.shadowColor="#3ddc84"; ctx.shadowBlur=20; ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle="#fff"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("EXIT", dx, dy-20);
+  }
+
+  // gates
+  vaultRooms.forEach(v=>{
+    if(!v.gate.open){
+      const colMap={red:"#e8443a",blue:"#3d7bff",yellow:"#f3c93d",green:"#3ddc84"};
+      ctx.fillStyle=colMap[v.gate.color];
+      v.gate.tiles.forEach(t=>{
+        ctx.fillRect(t.x*TILE-camX+2, t.y*TILE-camY+2, TILE-4, TILE-4);
+      });
+    }
+    if(v.keyPos) drawKey(v.keyPos.x, v.keyPos.y, v.keyPos.color, camX, camY);
+  });
+  if(redKeyPos) drawKey(redKeyPos.x, redKeyPos.y, "red", camX, camY);
+  if(coinCellPos1) drawCoin(coinCellPos1.x, coinCellPos1.y, camX, camY);
+  if(coinCellPos2) drawCoin(coinCellPos2.x, coinCellPos2.y, camX, camY);
+  digitSpots.forEach(d=>{
+    if(!d.collected){
+      const cx=d.x*TILE-camX+TILE/2, cy=d.y*TILE-camY+TILE/2;
+      ctx.fillStyle="#b98cff";
+      ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2);
+      ctx.shadowColor="#b98cff"; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle="#1a0f2e"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center";
+      ctx.fillText("#", cx, cy+4);
+    }
+  });
+  if(wrenchMachine && !wrenchMachine.done){
+    ctx.fillStyle="#aaa";
+    ctx.fillRect(wrenchMachine.x*TILE-camX+2, wrenchMachine.y*TILE-camY+2, TILE-4, TILE-4);
+    ctx.fillStyle="#333"; ctx.font="14px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("🔧", wrenchMachine.x*TILE-camX+TILE/2, wrenchMachine.y*TILE-camY+TILE/2+5);
+  }
+  if(gunPickup){
+    ctx.font="16px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("🔫", gunPickup.x*TILE-camX+TILE/2, gunPickup.y*TILE-camY+TILE/2+5);
+  }
+  if(shotFlash){
+    ctx.strokeStyle="rgba(255,230,120,"+Math.max(0,shotFlash.ttl/0.18)+")";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(shotFlash.x1-camX, shotFlash.y1-camY);
+    ctx.lineTo(shotFlash.x2-camX, shotFlash.y2-camY);
+    ctx.stroke();
+  }
+
+  // guard
+  if(speakerDecoy){
+    ctx.font="18px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("📢", speakerDecoy.x-camX, speakerDecoy.y-camY);
+  }
+  if(phase==="night"){
+    ctx.fillStyle= guard.stunTimer>0 ? "#7a8aa8" : "#c23a3a";
+    ctx.beginPath(); ctx.arc(guard.x-camX, guard.y-camY, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="12px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(guard.stunTimer>0 ? "💫" : "👮", guard.x-camX, guard.y-camY+4);
+    if(classDetectorRevealTimer>0){
+      ctx.strokeStyle="#7ee0ff"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(guard.x-camX, guard.y-camY, 18,0,Math.PI*2); ctx.stroke();
+      ctx.lineWidth=1;
+    }
+  }
+
+  // teammates (multiplayer)
+  if(isMultiplayer){
+    Object.values(remotePlayers).forEach(p=>{
+      const rx=p.x-camX, ry=p.y-camY;
+      ctx.globalAlpha = p.lives>0 ? 1 : 0.35;
+      ctx.fillStyle="#5bc0ff";
+      ctx.beginPath(); ctx.arc(rx,ry,9,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.fillStyle="#cfe8ff"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+      ctx.fillText(p.username||"Player", rx, ry-14);
+    });
+  }
+
+  // player
+  ctx.fillStyle="#ffb63d";
+  ctx.beginPath(); ctx.arc(player.x-camX, player.y-camY, 9, 0, Math.PI*2); ctx.fill();
+  if(isMultiplayer){
+    ctx.fillStyle="#ffe3b0"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(username||"You", player.x-camX, player.y-camY-14);
+  }
+
+  // flashlight / darkness overlay
+  if(nightMode || frustTimer>0){
+    if(!maskCanvas || maskCanvas.width!==canvas.width || maskCanvas.height!==canvas.height){
+      maskCanvas = document.createElement("canvas");
+      maskCanvas.width = canvas.width; maskCanvas.height = canvas.height;
+      maskCtx = maskCanvas.getContext("2d");
+    }
+    maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.globalCompositeOperation = "source-over";
+    maskCtx.fillStyle = "rgba(0,0,0,0.93)";
+    maskCtx.fillRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.globalCompositeOperation = "destination-out";
+
+    const px=player.x-camX, py=player.y-camY;
+
+    // small dim halo just past the core, so the immediate edges aren't a hard cutoff
+    let ambient = maskCtx.createRadialGradient(px,py,0,px,py,190);
+    ambient.addColorStop(0,"rgba(255,255,255,0.6)");
+    ambient.addColorStop(0.6,"rgba(255,255,255,0.35)");
+    ambient.addColorStop(1,"rgba(255,255,255,0)");
+    maskCtx.fillStyle=ambient; maskCtx.beginPath(); maskCtx.arc(px,py,190,0,Math.PI*2); maskCtx.fill();
+
+    // tight bright core right around the player
+    let core = maskCtx.createRadialGradient(px,py,0,px,py,110);
+    core.addColorStop(0,"rgba(255,255,255,1)");
+    core.addColorStop(0.7,"rgba(255,255,255,1)");
+    core.addColorStop(1,"rgba(255,255,255,0)");
+    maskCtx.fillStyle=core; maskCtx.beginPath(); maskCtx.arc(px,py,110,0,Math.PI*2); maskCtx.fill();
+
+    // short flashlight cone in the direction you're facing
+    const coneDist = 170;
+    const coneX = px+facing.x*coneDist, coneY=py+facing.y*coneDist;
+    let cone = maskCtx.createRadialGradient(px+facing.x*30,py+facing.y*30,10,coneX,coneY,150);
+    cone.addColorStop(0,"rgba(255,255,255,0.85)");
+    cone.addColorStop(0.6,"rgba(255,255,255,0.5)");
+    cone.addColorStop(1,"rgba(255,255,255,0)");
+    maskCtx.fillStyle=cone; maskCtx.beginPath(); maskCtx.arc(coneX,coneY,150,0,Math.PI*2); maskCtx.fill();
+
+    maskCtx.globalCompositeOperation = "source-over";
+    ctx.drawImage(maskCanvas,0,0);
+  }
+
+  maybeShowKeypad();
+}
+function drawKey(tx,ty,color,camX,camY){
+  const colMap={red:"#e8443a",blue:"#3d7bff",yellow:"#f3c93d",green:"#3ddc84"};
+  ctx.fillStyle=colMap[color];
+  const sx=tx*TILE-camX+TILE/2, sy=ty*TILE-camY+TILE/2;
+  ctx.beginPath(); ctx.arc(sx-4,sy,5,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(sx,sy-2,10,4);
+  ctx.shadowColor=colMap[color]; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+}
+function drawCoin(tx,ty,camX,camY){
+  ctx.fillStyle="#ffd94d";
+  ctx.beginPath(); ctx.arc(tx*TILE-camX+TILE/2, ty*TILE-camY+TILE/2, 7, 0, Math.PI*2);
+  ctx.shadowColor="#ffd94d"; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+}
+
+/* ============================ END GAME ============================ */
+function gameOver(won, text){
+  gameActive=false;
+  phase="ended";
+  if(animId) cancelAnimationFrame(animId);
+  document.getElementById("frustOverlay").style.display="none";
+  document.getElementById("keypad").style.display="none";
+  if(won){
+    if(gameMode==="ch2"){
+      addGems(5);
+      unlockAchievement("elevatorist");
+    } else {
+      addGems(3);
+      markCh1Won();
+      unlockAchievement("break_out");
+      if(lives===1) unlockAchievement("terminator");
+      if(!sessionFlags.lostLife && !sessionFlags.pickedGun && !sessionFlags.usedClass) unlockAchievement("real_solver");
+      if(sessionFlags.fullPartyThisSession && !sessionFlags.anyoneLostLifeMP) unlockAchievement("determination");
+    }
+  }
+  document.getElementById("endTitle").textContent = won ? "YOU ESCAPED!" : "GAME OVER";
+  document.getElementById("endTitle").style.color = won ? "#3ddc84" : "#ff5b3d";
+  document.getElementById("endText").textContent = text;
+  showScreen("end");
+}
+document.getElementById("btnRestart").onclick=()=>{
+  teardownNetwork();
+  isMultiplayer=false;
+  gameMode="ch1";
+  document.getElementById("hud").style.display="";
+  document.getElementById("hud2").style.display="none";
+  document.getElementById("inventoryBar").style.display="none";
+  showScreen("menu");
+};
+
+/* ============================================================================
+   CHAPTER 2 — 100 doors, no day/night
+   Host-authoritative in multiplayer (same pattern as Chapter 1); open rectangular
+   rooms (no maze walls) to keep collision simple and reliable.
+============================================================================ */
+let ch2=null;
+let ch2Player=null;
+let ch2Lives=3, ch2MaxLives=3, ch2Invuln=0;
+let ch2Bullets=0;
+let ch2Inventory=[]; // {type, timer (ms remaining while active, only for lighter/flashlight)}
+let ch2DetectorCooldown=0, ch2DetectorRevealTimer=0;
+let ch2Greches=null; // {timeLeft, hits, pointerAngle, goldAngle}
+let ch2RemoteEntity=null; // last known threat position for detector ping
+let ch2NetSendTimer=0, ch2NetBroadcastTimer=0;
+
+function ch2KeyReqFor(n){
+  if(n%5!==0) return 0;
+  if(n===25) return 0; // chase door, no key gate
+  if(n>=5 && n<=20) return 3+Math.floor(rand()*3);
+  if(n>=40 && n<=60) return 5+Math.floor(rand()*6);
+  if(n>=65 && n<=85) return 10+Math.floor(rand()*11);
+  if(n===95) return 25;
+  return 0;
+}
+function ch2RoomSize(n){
+  if(n===100) return {cols:46, rows:30};
+  if(n%5===0) return {cols:32, rows:22};
+  return {cols:19, rows:13};
+}
+function ch2IsCheckpoint(n){ return n%5===0 && n!==25; }
+function ch2InChaseWindow(n){ return n>=25 && n<35; }
+function ch2ForcedBlackout(n){ return n>=90 && n<=99; }
+
+function ch2GenerateRoom(n){
+  seedRandom((ch2.baseSeed>>>0) + n*7919);
+  const {cols,rows} = ch2RoomSize(n);
+  const isBig = ch2IsCheckpoint(n) || n===100;
+  const room = {
+    doorNum:n, cols, rows,
+    entry:{x:1.5, y:rows/2},
+    exit:{x:cols-1.5, y:rows/2},
+    closet: null,
+    items: [],
+    isCheckpoint: ch2IsCheckpoint(n),
+    isChaseRoom: ch2InChaseWindow(n),
+    isFinal: n===100,
+    keyReq: ch2KeyReqFor(n),
+    police: null,
+    rushSelected: false,
+    rushState:"none", rushTimer:0, rushBlinkTimer:0, rushBlinkCount:0,
+    isBlackout:false,
+    finalStage:null,
+    grid:null
+  };
+
+  // "hotel"/police-station floor plan for checkpoint rooms and door 100
+  if(isBig){
+    const station = ch2BuildStation(cols,rows);
+    room.grid = station.grid;
+    // punch entry/exit corridors through to the west/east edges and hook them into the layout
+    const g=room.grid;
+    const entryTx=1, entryTy=Math.floor(rows/2);
+    const exitTx=cols-2, exitTy=Math.floor(rows/2);
+    g[entryTx][entryTy]=1; g[exitTx][exitTy]=1;
+    const nearestRoom=(tx,ty)=> station.rooms.reduce((best,r)=>{
+      const d=Math.abs((r.x+r.w/2)-tx)+Math.abs((r.y+r.h/2)-ty);
+      return (!best||d<best.d) ? {r,d} : best;
+    },null).r;
+    const re=nearestRoom(entryTx,entryTy);
+    ch2CarveCorridor(g,cols,rows, entryTx,entryTy, Math.floor(re.x+re.w/2), Math.floor(re.y+re.h/2));
+    const rx=nearestRoom(exitTx,exitTy);
+    ch2CarveCorridor(g,cols,rows, exitTx,exitTy, Math.floor(rx.x+rx.w/2), Math.floor(rx.y+rx.h/2));
+    room.entry={x:entryTx+0.5,y:entryTy+0.5};
+    room.exit={x:exitTx+0.5,y:exitTy+0.5};
+  }
+
+  // blackout roll
+  if(ch2ForcedBlackout(n)) room.isBlackout=true;
+  else if(room.isCheckpoint) room.isBlackout = (n===95) ? true : rand()<0.5;
+  else if(!room.isFinal) room.isBlackout = rand()<0.25;
+
+  // rush roll (never in checkpoint rooms or door 100)
+  if(!room.isCheckpoint && !room.isFinal && !room.isChaseRoom){
+    room.rushSelected = rand()<0.15;
+  }
+  {
+    const c = ch2RandomFloorTile(room);
+    room.closet = {x:c.x, y:c.y, w:1.4, h:1.4};
+  }
+
+  // police in every checkpoint room (including 100's "last police")
+  if(room.isCheckpoint || room.isFinal){
+    const p = ch2RandomFloorTile(room);
+    room.police = {x:p.x*TILE, y:p.y*TILE, speed: n===100?110:95, oneshot:(n===100),
+      visionLimited:(n===100), visionRadius:260, path:[], repathTimer:0, stunTimer:0};
+  }
+
+  // items: normal rooms get the item table; door100 gets batteries instead
+  if(room.isFinal){
+    room.finalStage = {
+      batteries:0, batteriesNeeded:15, batterySpots:[],
+      machines:[false,false,false,false], machineSpots:[], machineProgress:[0,0,0,0], machineRequired:80,
+      lockerOpen:false, wiresDone:false, wireDoneAt:0,
+      elevatorActive:false, elevatorTimer:45, elevatorPos:null
+    };
+    for(let i=0;i<15;i++){
+      const s=ch2RandomFloorTile(room);
+      room.finalStage.batterySpots.push({x:s.x, y:s.y, taken:false});
+    }
+    for(let i=0;i<4;i++){
+      const s=ch2RandomFloorTile(room);
+      room.finalStage.machineSpots.push({x:s.x, y:s.y});
+    }
+    const lockerSpot=ch2RandomFloorTile(room);
+    room.finalStage.lockerPos = {x:lockerSpot.x, y:lockerSpot.y};
+    const elevSpot=ch2RandomFloorTile(room);
+    room.finalStage.elevatorPos = {x:elevSpot.x, y:elevSpot.y};
+  } else {
+    const roll=(p)=> rand()<p;
+    const spot=()=> ch2RandomFloorTile(room);
+    if(roll(0.05)) room.items.push({id:"bandage_"+n, type:"bandage", ...spot()});
+    if(roll(0.03)) room.items.push({id:"medkit_"+n, type:"medkit", ...spot()});
+    if(roll(0.01)) room.items.push({id:"detector_"+n, type:"detector", ...spot()});
+    if(roll(0.25)) room.items.push({id:"lighter_"+n, type:"lighter", ...spot()});
+    if(roll(0.08)) room.items.push({id:"flashlight_"+n, type:"flashlight", ...spot()});
+    // keys only appear in the checkpoint room itself, scattered around its floor plan
+    if(room.keyReq>0){
+      for(let i=0;i<room.keyReq;i++){
+        room.items.push({id:"key_"+n+"_"+i, type:"key", count:1, ...spot()});
+      }
+    }
+  }
+  return room;
+}
+function ch2CurrentLegInfo(n){
+  let next = n+1;
+  while(next%5!==0) next++;
+  const req = ch2KeyReqFor(next);
+  const roomsLeft = next-n;
+  return {nextCheckpoint:next, req, roomsLeft};
+}
+
+/* ---- police-station-style layout for checkpoint rooms & door 100 ("hotel" floor plan) ---- */
+function ch2CarveRect(g,cols,rows,x,y,w,h){
+  for(let i=x;i<x+w;i++) for(let j=y;j<y+h;j++){
+    if(i>0&&j>0&&i<cols-1&&j<rows-1) g[i][j]=1;
+  }
+}
+function ch2CarveCorridor(g,cols,rows,x1,y1,x2,y2){
+  function carveH(y,xa,xb){ const a=Math.min(xa,xb),b=Math.max(xa,xb); for(let x=a;x<=b;x++){ if(y>0&&y<rows-1) g[x][y]=1; if(y+1>0&&y+1<rows-1) g[x][y+1]=1; } }
+  function carveV(x,ya,yb){ const a=Math.min(ya,yb),b=Math.max(ya,yb); for(let y=a;y<=b;y++){ if(x>0&&x<cols-1) g[x][y]=1; if(x+1>0&&x+1<cols-1) g[x+1][y]=1; } }
+  if(rand()<0.5){ carveH(y1,x1,x2); carveV(x2,y1,y2); }
+  else { carveV(x1,y1,y2); carveH(y2,x1,x2); }
+}
+function ch2BuildStation(cols,rows){
+  const g=new Array(cols); for(let i=0;i<cols;i++) g[i]=new Array(rows).fill(0);
+  const rooms=[];
+  let tries=0;
+  const target = Math.max(6, Math.floor((cols*rows)/85));
+  while(rooms.length<target && tries<500){
+    tries++;
+    const w=4+Math.floor(rand()*4), h=3+Math.floor(rand()*3);
+    const x=2+Math.floor(rand()*Math.max(1,cols-w-4));
+    const y=2+Math.floor(rand()*Math.max(1,rows-h-4));
+    const room={x,y,w,h};
+    const overlaps = rooms.some(r=> !(room.x+room.w+1<r.x || r.x+r.w+1<room.x || room.y+room.h+1<r.y || r.y+r.h+1<room.y));
+    if(overlaps) continue;
+    rooms.push(room);
+  }
+  rooms.forEach(r=>ch2CarveRect(g,cols,rows,r.x,r.y,r.w,r.h));
+  const connected=[rooms[0]]; const remaining=rooms.slice(1);
+  function center(r){ return [Math.floor(r.x+r.w/2), Math.floor(r.y+r.h/2)]; }
+  while(remaining.length){
+    let best=null,bestDist=Infinity,bestIdx=-1;
+    connected.forEach(c=>{
+      const [cx,cy]=center(c);
+      remaining.forEach((r,i)=>{
+        const [rx,ry]=center(r);
+        const d=Math.abs(cx-rx)+Math.abs(cy-ry);
+        if(d<bestDist){ bestDist=d; best=r; bestIdx=i; }
+      });
+    });
+    const [cx,cy]=center(connected[connected.length-1]);
+    const [rx,ry]=center(best);
+    ch2CarveCorridor(g,cols,rows,cx,cy,rx,ry);
+    connected.push(best); remaining.splice(bestIdx,1);
+  }
+  return {grid:g, rooms};
+}
+function ch2RandomFloorTile(room, avoidRooms){
+  if(!room.grid) return {x:2+rand()*(room.cols-4), y:1+rand()*(room.rows-2)};
+  for(let tries=0;tries<400;tries++){
+    const x=1+Math.floor(rand()*(room.cols-2));
+    const y=1+Math.floor(rand()*(room.rows-2));
+    if(room.grid[x][y]!==1) continue;
+    return {x:x+0.5,y:y+0.5};
+  }
+  return {x:room.cols/2,y:room.rows/2};
+}
+function ch2Neighbors4(g,cols,rows,tx,ty){
+  const res=[];
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+    const nx=tx+dx, ny=ty+dy;
+    if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&g[nx][ny]===1) res.push([nx,ny]);
+  });
+  return res;
+}
+function ch2BFS(g,cols,rows,sx,sy,tx,ty){
+  sx=Math.max(0,Math.min(cols-1,sx)); sy=Math.max(0,Math.min(rows-1,sy));
+  if(g[sx][sy]!==1){
+    // snap to nearest floor tile if we somehow start off-grid
+    outer: for(let rad=1; rad<6; rad++){
+      for(let dx=-rad;dx<=rad;dx++) for(let dy=-rad;dy<=rad;dy++){
+        const nx=sx+dx, ny=sy+dy;
+        if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&g[nx][ny]===1){ sx=nx; sy=ny; break outer; }
+      }
+    }
+  }
+  if(sx===tx&&sy===ty) return [];
+  const key=(x,y)=>x+","+y;
+  const visited=new Set([key(sx,sy)]);
+  const q=[[sx,sy]]; const prev={};
+  let qi=0;
+  while(qi<q.length){
+    const [cx,cy]=q[qi++];
+    if(cx===tx&&cy===ty) break;
+    for(const [nx,ny] of ch2Neighbors4(g,cols,rows,cx,cy)){
+      const k=key(nx,ny);
+      if(!visited.has(k)){ visited.add(k); prev[k]=[cx,cy]; q.push([nx,ny]); }
+    }
+  }
+  const tk=key(tx,ty);
+  if(!visited.has(tk)) return null;
+  const path=[]; let cur=[tx,ty];
+  while(cur[0]!==sx||cur[1]!==sy){ path.unshift(cur); cur=prev[key(cur[0],cur[1])]; if(!cur) return null; }
+  return path;
+}
+
+function ch2EnterRoom(n){
+  ch2.room = ch2GenerateRoom(n);
+  ch2.doorNum = n;
+  ch2.advanceLock = 1.0; // brief grace period after any advance — see ch2Advance
+  if(n===50) unlockAchievement("halfway");
+  ch2.keysCollected = 0;
+  ch2.keysRequired = ch2.room.keyReq;
+  if(ch2.room.isChaseRoom && !ch2.chaserSpawned){
+    ch2.chaserSpawned=true;
+    ch2.chaser = {x:(ch2.room.cols-3)*TILE, y:(ch2.room.rows/2)*TILE, speed:105, stunTimer:0};
+  }
+  if(!ch2.room.isChaseRoom) ch2.chaser=null;
+  const ex=ch2.room.entry.x*TILE, ey=ch2.room.entry.y*TILE;
+  if(ch2Player){ ch2Player.x=ex; ch2Player.y=ey; }
+  // remote players' last-known positions are from the OLD room (right next to its exit,
+  // since that's what triggered the advance) — snap them to the new entry too, otherwise
+  // that stale position can immediately satisfy the new room's exit check and chain-advance
+  // through several doors before their next real position update arrives
+  Object.values(remotePlayers).forEach(p=>{ p.x=ex; p.y=ey; });
+  Object.keys(remotePlayers).forEach(id=>{ catchCooldown[id]=performance.now(); });
+  ch2Invuln=Math.max(ch2Invuln,1.2);
+  ch2RemoteEntity=null;
+  if(ch2.room.rushState==="none" && ch2.room.rushSelected){
+    ch2.room.rushTimer = 3+rand()*3;
+  }
+  document.getElementById("rushWarning").style.display="none";
+  updateCh2Hud();
+}
+
+function startChapter2Singleplayer(){
+  isMultiplayer=false; isHost=false;
+  ch2StartCore(Math.floor(Math.random()*4294967295));
+}
+function beginMultiplayerChapter2(seed){
+  ch2StartCore(seed);
+}
+function ch2StartCore(seed){
+  gameMode="ch2";
+  ch2={ baseSeed:seed, doorNum:1, keysCollected:0, keysRequired:0, room:null, chaser:null, chaserSpawned:false };
+  ch2MaxLives=(equippedClass==="tank")?4:3; ch2Lives=ch2MaxLives; ch2Invuln=0;
+  ch2Inventory=[];
+  ch2Bullets=(equippedClass==="agent")?(1+Math.floor(Math.random()*3)):0;
+  ch2DetectorCooldown=0; ch2DetectorRevealTimer=0;
+  ch2Greches=null;
+  invisibleTimer=0; classAbilityCooldown=0;
+  ch2BaseSpeed = equippedClass==="speedster" ? 130*1.2 : 130;
+  ch2Player={x:0,y:0,speed: ch2BaseSpeed};
+  Object.keys(remotePlayers).forEach(id=>{ remotePlayers[id].lives=3; remotePlayers[id].alive=true; });
+  const partySize = isMultiplayer ? (1+Object.keys(remotePlayers).length) : 1;
+  if(partySize<=1) unlockAchievement("real_friend");
+  if(isMultiplayer && partySize>=4) unlockAchievement("mafia");
+  resetSessionFlags();
+  sessionFlags.usedClass = !!equippedClass;
+  updateAbilityButton();
+  ch2EnterRoom(1);
+  gameActive=true;
+  document.getElementById("hud").style.display="none";
+  document.getElementById("hud2").style.display="flex";
+  document.getElementById("inventoryBar").style.display="flex";
+  showScreen("game");
+  setupCanvas();
+  updateCh2Hud();
+  showMsg("Door 1 of 100. Find what you need and move on.", 3500);
+  lastTime=performance.now();
+  if(animId) cancelAnimationFrame(animId);
+  animId=requestAnimationFrame(loop);
+}
+
+function ch2Authoritative(){ return !isMultiplayer || isHost; }
+
+function ch2Move(dt){
+  if(!ch2Player || ch2Hiding()) return;
+  let dx=0,dy=0;
+  if(keys["w"]||keys["arrowup"]) dy=-1;
+  if(keys["s"]||keys["arrowdown"]) dy=1;
+  if(keys["a"]||keys["arrowleft"]) dx=-1;
+  if(keys["d"]||keys["arrowright"]) dx=1;
+  if(joystickVec.x||joystickVec.y){ dx=joystickVec.x; dy=joystickVec.y; }
+  if(!dx && !dy) return;
+  const len=Math.hypot(dx,dy); dx/=len; dy/=len;
+  facing={x:dx,y:dy};
+  const speed=ch2Player.speed;
+  const nx=ch2Player.x+dx*speed*dt, ny=ch2Player.y+dy*speed*dt;
+  const r=9, cols=ch2.room.cols, rows=ch2.room.rows;
+  if(ch2.room.grid){
+    const g=ch2.room.grid;
+    const solid=(x,y)=>{
+      const tx=Math.floor(x/TILE), ty=Math.floor(y/TILE);
+      if(tx<0||ty<0||tx>=cols||ty>=rows) return true;
+      return g[tx][ty]!==1;
+    };
+    let px=ch2Player.x, py=ch2Player.y;
+    if(!solid(nx-r,py-r)&&!solid(nx+r,py-r)&&!solid(nx-r,py+r)&&!solid(nx+r,py+r)) px=nx;
+    if(!solid(px-r,ny-r)&&!solid(px+r,ny-r)&&!solid(px-r,ny+r)&&!solid(px+r,ny+r)) py=ny;
+    ch2Player.x=px; ch2Player.y=py;
+  } else {
+    ch2Player.x = Math.min(Math.max(nx, r), cols*TILE-r);
+    ch2Player.y = Math.min(Math.max(ny, r), rows*TILE-r);
+  }
+}
+function ch2Hiding(){
+  return ch2.room.rushState==="hiding" && ch2InCloset();
+}
+function ch2InCloset(){
+  const c=ch2.room.closet;
+  if(!c || !ch2Player) return false;
+  return Math.abs(ch2Player.x/TILE-c.x)<c.w && Math.abs(ch2Player.y/TILE-c.y)<c.h;
+}
+
+function ch2Update(dt){
+  if(!ch2 || !ch2.room) return;
+  if(ch2Invuln>0) ch2Invuln-=dt;
+  if(ch2DetectorCooldown>0) ch2DetectorCooldown-=dt;
+  if(ch2DetectorRevealTimer>0) ch2DetectorRevealTimer-=dt;
+  if(classAbilityCooldown>0) classAbilityCooldown-=dt;
+  if(invisibleTimer>0) invisibleTimer-=dt;
+  if(adrenalineTimer>0){ adrenalineTimer-=dt; ch2Player.speed=ch2BaseSpeed*1.6; if(adrenalineTimer<=0) ch2Player.speed=ch2BaseSpeed; }
+  if(speakerDecoy){ speakerDecoy.timeLeft-=dt; if(speakerDecoy.timeLeft<=0) speakerDecoy=null; }
+  ch2Inventory.forEach(it=>{
+    if((it.type==="lighter"||it.type==="flashlight") && it.on){
+      it.timer-=dt;
+      if(it.timer<=0){ it.on=false; it.timer=0; }
+    }
+  });
+
+  ch2Move(dt);
+  ch2CheckItemProximityLocal();
+
+  const r=ch2.room;
+  if(r.isFinal){ ch2UpdateFinalStage(dt); }
+
+  // greches: personal hazard, evaluated locally for every player (host and clients alike)
+  {
+    const lit = (ch2Inventory.some(it=>(it.type==="lighter"||it.type==="flashlight") && it.on)) || equippedClass==="nightvision";
+    if(r.isBlackout && !lit && !ch2Greches && r.rushState!=="hiding" && equippedClass!=="nightvision"){
+      r.myGrechesBuildup = (r.myGrechesBuildup||0)+dt;
+      if(r.myGrechesBuildup>4){ ch2StartGreches(); r.myGrechesBuildup=0; }
+    } else if(!r.isBlackout || lit){
+      r.myGrechesBuildup=0;
+    }
+  }
+
+  if(ch2Authoritative()){
+    // rush timeline
+    if(r.rushState==="none" && r.rushSelected){
+      r.rushTimer-=dt;
+      if(r.rushTimer<=0){ r.rushState="warning"; r.rushBlinkTimer=0; r.rushBlinkCount=0; }
+    } else if(r.rushState==="warning"){
+      r.rushBlinkTimer-=dt;
+      if(r.rushBlinkTimer<=0){
+        r.rushBlinkTimer=0.35; r.rushBlinkCount++;
+        if(r.rushBlinkCount>=3){ r.rushState="hiding"; r.rushTimer=6; document.getElementById("rushWarning").style.display="block"; unlockAchievement("bound"); }
+      }
+    } else if(r.rushState==="hiding"){
+      r.rushTimer-=dt;
+      if(r.rushTimer<=0){
+        document.getElementById("rushWarning").style.display="none";
+        const safe = ch2InCloset();
+        if(!safe){ ch2GameOver(false,"Rush caught you."); return; }
+        r.rushState="passed";
+        showMsg("It passed by without noticing you...", 3000);
+      }
+    }
+    // police / chaser pursuit (simple direct movement, open rooms)
+    if(speakerDecoy){
+      const ents=[r.police, ch2.chaser].filter(Boolean);
+      for(const e of ents){
+        if(Math.hypot(e.x-speakerDecoy.x, e.y-speakerDecoy.y)<24){
+          speakerDecoy=null; showMsg("The guard smashed your decoy speaker!",1800); break;
+        }
+      }
+    }
+    if(r.police){
+      const t=ch2FindNearestTarget(r.police);
+      if(t) ch2MoveEntityToward(r.police, t, dt);
+      ch2CheckEntityCatchAll(r.police, r.police.oneshot);
+    }
+    if(ch2.chaser){
+      const t=ch2FindNearestTarget(ch2.chaser);
+      if(t) ch2MoveEntityToward(ch2.chaser, t, dt);
+      ch2CheckEntityCatchAll(ch2.chaser, false);
+    }
+
+    // door / progress check — ANY player reaching the exit should advance the room, not just the host
+    if(!r.isFinal){
+      if(ch2.advanceLock>0) ch2.advanceLock-=dt;
+      const atExitTile=(px,py)=> Math.abs(px/TILE-r.exit.x)<1.1 && Math.abs(py/TILE-r.exit.y)<1.4;
+      let atExit = atExitTile(ch2Player.x, ch2Player.y);
+      if(!atExit) atExit = Object.values(remotePlayers).some(p=>atExitTile(p.x,p.y));
+      const unlocked = ch2.keysCollected>=ch2.keysRequired;
+      if(atExit && unlocked && r.rushState!=="hiding" && !(ch2.advanceLock>0)){
+        ch2Advance();
+      }
+    }
+  }
+
+  if(ch2Greches) ch2UpdateGreches(dt);
+
+  if(isMultiplayer && gameActive){
+    ch2NetSendTimer-=dt;
+    if(ch2NetSendTimer<=0){
+      ch2NetSendTimer=0.1;
+      if(!isHost) sendToHost({type:"ch2_pos", x:ch2Player.x, y:ch2Player.y, facing, equippedClass, invisible: invisibleTimer>0, lives:ch2Lives});
+    }
+    if(isHost){
+      ch2NetBroadcastTimer-=dt;
+      if(ch2NetBroadcastTimer<=0){ ch2NetBroadcastTimer=0.12; ch2BroadcastState(); }
+    }
+  }
+  updateCh2Hud();
+}
+function ch2MoveEntityToward(ent, target, dt){
+  if(ent.stunTimer>0){ ent.stunTimer=Math.max(0,ent.stunTimer-dt); return; }
+  const room=ch2.room;
+  if(!room.grid){
+    const dx=target.x-ent.x, dy=target.y-ent.y;
+    const d=Math.hypot(dx,dy);
+    if(d<2) return;
+    ent.x += (dx/d)*ent.speed*dt;
+    ent.y += (dy/d)*ent.speed*dt;
+    return;
+  }
+  // grid-based room: use pathfinding so the entity can't cut through walls
+  const g=room.grid, cols=room.cols, rows=room.rows;
+  ent.repathTimer = (ent.repathTimer||0) - dt;
+  const ex=Math.floor(ent.x/TILE), ey=Math.floor(ent.y/TILE);
+  const tx=Math.floor(target.x/TILE), ty=Math.floor(target.y/TILE);
+  const dist=Math.hypot(ent.x-target.x, ent.y-target.y);
+  const sleepy = equippedClass==="sleepy";
+  const effectiveVision = ent.visionRadius ? (sleepy ? ent.visionRadius*0.65 : ent.visionRadius) : 9999;
+  const canSee = !ent.visionLimited || dist < effectiveVision;
+  if(!ent.path) ent.path=[];
+  if(ent.repathTimer<=0 || (canSee && ent.path.length===0) || (!ent.wandering && !canSee)){
+    ent.repathTimer = canSee ? 0.6 : 2.2;
+    ent.wandering = !canSee;
+    let goal = canSee ? [tx,ty] : [1+Math.floor(Math.random()*(cols-2)), 1+Math.floor(Math.random()*(rows-2))];
+    if(g[goal[0]] === undefined || g[goal[0]][goal[1]]!==1) goal=[ex,ey];
+    ent.path = ch2BFS(g,cols,rows,ex,ey,goal[0],goal[1]) || [];
+  }
+  if(ent.path.length){
+    const next=ent.path[0];
+    const ntx=(next[0]+0.5)*TILE, nty=(next[1]+0.5)*TILE;
+    const dx=ntx-ent.x, dy=nty-ent.y, d=Math.hypot(dx,dy);
+    if(d<4) ent.path.shift();
+    else { ent.x += (dx/d)*ent.speed*dt; ent.y += (dy/d)*ent.speed*dt; }
+  }
+}
+function ch2Shoot(){
+  if(ch2Bullets<=0 || !ch2Player || !ch2.room) return;
+  ch2Bullets--;
+  const r=ch2.room;
+  const solid=(x,y)=>{
+    if(!r.grid) return false;
+    const tx=Math.floor(x/TILE), ty=Math.floor(y/TILE);
+    if(tx<0||ty<0||tx>=r.cols||ty>=r.rows) return true;
+    return r.grid[tx][ty]!==1;
+  };
+  let x=ch2Player.x, y=ch2Player.y;
+  const targets=[r.police, ch2.chaser].filter(Boolean);
+  for(let d=0; d<280; d+=8){
+    x+=facing.x*8; y+=facing.y*8;
+    if(solid(x,y)) return;
+    for(const t of targets){
+      if(Math.hypot(x-t.x,y-t.y)<22){
+        t.stunTimer=3;
+        showMsg("Stunned it!", 1800);
+        return;
+      }
+    }
+  }
+}
+function ch2CheckEntityCatch(ent, oneshot){
+  if(ent.stunTimer>0 || ch2Invuln>0 || invisibleTimer>0) return;
+  const d=Math.hypot(ent.x-ch2Player.x, ent.y-ch2Player.y);
+  if(d<20){
+    if(oneshot){ ch2GameOver(false,"The last guard caught you."); return; }
+    ch2Invuln=1.6;
+    ch2Lives=Math.max(0,ch2Lives-1);
+    if(ch2Lives<=0){ ch2GameOver(false,"You ran out of hearts."); return; }
+    showMsg("Caught! -1 heart.", 2000);
+    ch2Player.x=ch2.room.entry.x*TILE; ch2Player.y=ch2.room.entry.y*TILE;
+  }
+}
+function ch2FindNearestTarget(ent){
+  if(speakerDecoy) return {x:speakerDecoy.x, y:speakerDecoy.y};
+  let best=null, bestDist=Infinity;
+  if(ch2Lives>0 && invisibleTimer<=0){
+    const d=Math.hypot(ent.x-ch2Player.x, ent.y-ch2Player.y);
+    if(d<bestDist){ bestDist=d; best={x:ch2Player.x, y:ch2Player.y}; }
+  }
+  Object.values(remotePlayers).forEach(p=>{
+    if(p.lives>0 && !p.invisible){
+      const d=Math.hypot(ent.x-p.x, ent.y-p.y);
+      if(d<bestDist){ bestDist=d; best={x:p.x, y:p.y}; }
+    }
+  });
+  return best;
+}
+function ch2CheckEntityCatchAll(ent, oneshot){
+  ch2CheckEntityCatch(ent, oneshot);
+  if(!isMultiplayer || ent.stunTimer>0) return;
+  Object.keys(remotePlayers).forEach(id=>{
+    const p=remotePlayers[id];
+    if(p.lives<=0 || p.invisible) return;
+    const now=performance.now();
+    if(catchCooldown[id] && now-catchCooldown[id] < 1600) return;
+    const d=Math.hypot(ent.x-p.x, ent.y-p.y);
+    if(d<20){
+      catchCooldown[id]=now;
+      if(oneshot){ ch2GameOver(false, (p.username||"A teammate")+" got caught."); return; }
+      p.lives=Math.max(0,p.lives-1);
+      const conn=clientConns.find(c=>c.peer===id);
+      if(conn){ try{ conn.send({type:"ch2_caught"}); }catch(e){} }
+      if(p.lives<=0){ ch2GameOver(false, (p.username||"A teammate")+" ran out of hearts."); return; }
+    }
+  });
+}
+function ch2Advance(){
+  const next=ch2.doorNum+1;
+  if(next>100){ return; }
+  showMsg("Door "+ch2.doorNum+" unlocked.", 1500);
+  ch2EnterRoom(next);
+  if(isMultiplayer) ch2BroadcastState();
+}
+
+/* ---------- Greches minigame ---------- */
+function ch2StartGreches(){
+  ch2Greches = {timeLeft:20, hits:0, pointerAngle:0, goldAngle:Math.random()*360};
+  document.getElementById("grechesOverlay").style.display="flex";
+}
+function ch2UpdateGreches(dt){
+  const g=ch2Greches;
+  g.pointerAngle = (g.pointerAngle + dt*140) % 360;
+  g.timeLeft -= dt;
+  document.getElementById("grechesPointer").style.transform="translateX(-50%) rotate("+g.pointerAngle+"deg)";
+  document.getElementById("grechesGoldWrap").style.transform="rotate("+g.goldAngle+"deg)";
+  document.getElementById("grechesTimer").textContent=Math.max(0,g.timeLeft).toFixed(1)+"s";
+  document.getElementById("grechesHits").textContent=g.hits;
+  if(g.timeLeft<=0){
+    ch2Lives=Math.max(0,ch2Lives-1);
+    unlockAchievement("friend_q");
+    document.getElementById("grechesOverlay").style.display="none";
+    if(ch2Lives<=0){ ch2Greches=null; ch2GameOver(false,"Greches got you."); return; }
+    showMsg("Greches got a hit in! -1 heart. Find some light...", 2500);
+    ch2Greches=null;
+    ch2.room.myGrechesBuildup=0;
+  }
+}
+document.getElementById("btnGrechesTap").onclick=()=>{
+  if(!ch2Greches) return;
+  const g=ch2Greches;
+  const diff=Math.min(Math.abs(g.pointerAngle-g.goldAngle), 360-Math.abs(g.pointerAngle-g.goldAngle));
+  if(diff<22){
+    g.hits++;
+    g.goldAngle=Math.random()*360;
+    if(g.hits>=3){
+      document.getElementById("grechesOverlay").style.display="none";
+      ch2Greches=null;
+      showMsg("You broke free of Greches (for now).", 2500);
+    }
+  } else {
+    g.timeLeft=Math.max(0,g.timeLeft-2);
+  }
+};
+
+/* ---------- items / inventory ---------- */
+function ch2CheckItemProximityLocal(){
+  const r=ch2.room;
+  if(r.isFinal) return;
+  const authoritative = ch2Authoritative();
+  for(let i=r.items.length-1;i>=0;i--){
+    const it=r.items[i];
+    if(it.pickupAt && Date.now()<it.pickupAt) continue; // just-dropped item, still settling
+    if(near(ch2Player.x,ch2Player.y,it.x,it.y,0.9)){
+      if(authoritative){
+        ch2ResolvePickup(it.id, true); // host picked it up themselves -> goes in host's own inventory
+      } else if(it.type==="key"){
+        sendIntentOnce("ch2p_"+it.id, {type:"ch2_pickup", id:it.id}); // shared pool, host resolves + broadcasts
+      } else {
+        // personal item: pick it up into THIS player's own inventory right away,
+        // and just ask the host to drop it from the shared room so others don't also grab it
+        if(ch2Inventory.length<4){
+          ch2Inventory.push({type:it.type, timer:0, on:false});
+          showMsg("Picked up a "+it.type+".", 1800);
+          renderCh2Inventory();
+          r.items.splice(i,1);
+          sendIntentOnce("ch2p_"+it.id, {type:"ch2_pickup", id:it.id});
+        }
+      }
+    }
+  }
+}
+function ch2ResolvePickup(id, isMine){
+  const r=ch2.room;
+  const idx=r.items.findIndex(i=>i.id===id);
+  if(idx<0) return;
+  const it=r.items[idx];
+  if(it.type==="key"){
+    ch2.keysCollected += it.count;
+    r.items.splice(idx,1);
+    showMsg("+"+it.count+" key(s). ("+ch2.keysCollected+"/"+ch2.keysRequired+")", 1800);
+  } else if(isMine){
+    // only remove it from the shared room if we actually have room to carry it —
+    // otherwise it stays on the floor instead of vanishing for nothing
+    if(ch2Inventory.length>=4) return;
+    r.items.splice(idx,1);
+    ch2Inventory.push({type:it.type, timer:0, on:false});
+    showMsg("Picked up a "+it.type+".", 1800);
+    renderCh2Inventory();
+  } else {
+    // host resolving a pickup a remote player already accepted on their end —
+    // that player has already added it to their own inventory locally, just clear it here
+    r.items.splice(idx,1);
+  }
+}
+function ch2UseItem(idx){
+  const it=ch2Inventory[idx];
+  if(!it) return;
+  if(it.type==="bandage"){ ch2Lives=Math.min(ch2MaxLives,ch2Lives+1); ch2Inventory.splice(idx,1); showMsg("Used bandage, +1 heart.",1800); }
+  else if(it.type==="medkit"){ ch2Lives=Math.min(ch2MaxLives,ch2Lives+2); ch2Inventory.splice(idx,1); showMsg("Used medkit, +2 hearts.",1800); }
+  else if(it.type==="detector"){
+    if(ch2DetectorCooldown>0){ showMsg("Detector on cooldown.",1500); return; }
+    ch2DetectorRevealTimer=5; ch2DetectorCooldown=45;
+    showMsg("Detector active — nearby threats revealed for 5s.",2200);
+  } else if(it.type==="lighter"){
+    it.on=!it.on; if(it.on && it.timer<=0) it.timer=20;
+  } else if(it.type==="flashlight"){
+    it.on=!it.on; if(it.on && it.timer<=0) it.timer=30;
+  }
+  renderCh2Inventory();
+}
+function ch2DropItem(idx){
+  const it=ch2Inventory[idx];
+  if(!it) return;
+  ch2Inventory.splice(idx,1);
+  if(!ch2.room.isFinal){
+    if(ch2Authoritative()){
+      ch2.room.items.push({id:"dropped_"+Date.now()+"_"+Math.floor(Math.random()*1000), type:it.type, x:ch2Player.x/TILE, y:ch2Player.y/TILE, pickupAt:Date.now()+3000});
+    } else {
+      sendToHost({type:"ch2_drop", itemType:it.type, x:ch2Player.x/TILE, y:ch2Player.y/TILE});
+    }
+  }
+  renderCh2Inventory();
+}
+function renderCh2Inventory(){
+  const bar=document.getElementById("inventoryBar");
+  bar.innerHTML="";
+  const icons={bandage:"🩹",medkit:"💊",detector:"📡",lighter:"🔥",flashlight:"🔦"};
+  ch2Inventory.forEach((it,i)=>{
+    const slot=document.createElement("div");
+    slot.className="invSlot";
+    slot.innerHTML = icons[it.type]||"❔";
+    if((it.type==="lighter"||it.type==="flashlight") && it.on){
+      const t=document.createElement("div"); t.className="invTimer"; t.textContent=Math.ceil(it.timer)+"s";
+      slot.appendChild(t);
+      slot.style.boxShadow="0 0 10px "+"#ffd94d";
+    }
+    const fireUse=(e)=>{ if(e.cancelable) e.preventDefault(); ch2UseItem(i); };
+    slot.onclick=fireUse;
+    slot.addEventListener("touchstart", fireUse, {passive:false});
+    const drop=document.createElement("div"); drop.className="invDrop"; drop.textContent="×";
+    const fireDrop=(e)=>{ e.stopPropagation(); if(e.cancelable) e.preventDefault(); ch2DropItem(i); };
+    drop.onclick=fireDrop;
+    drop.addEventListener("touchstart", fireDrop, {passive:false});
+    slot.appendChild(drop);
+    bar.appendChild(slot);
+  });
+}
+
+/* ---------- door 100 final stage ---------- */
+function ch2UpdateFinalStage(dt){
+  const fs=ch2.room.finalStage;
+  if(!fs.lockerOpen){
+    fs.batterySpots.forEach(b=>{
+      if(!b.taken && near(ch2Player.x,ch2Player.y,b.x,b.y,0.9)){
+        b.taken=true; fs.batteries++;
+        showMsg("Battery "+fs.batteries+"/"+fs.batteriesNeeded, 1400);
+      }
+    });
+    fs.machineSpots.forEach((m,i)=>{
+      if(fs.machines[i]) return;
+      const atMachine = near(ch2Player.x,ch2Player.y,m.x,m.y,1.0);
+      if(atMachine && keys[" "]){
+        fs.machineProgress[i]+=dt*(equippedClass==="engineer"?1.25:1);
+        if(fs.machineProgress[i]>=fs.machineRequired){
+          fs.machines[i]=true;
+          showMsg("Machine "+(i+1)+"/4 complete.", 1800);
+        }
+      }
+    });
+    if(fs.batteries>=fs.batteriesNeeded && fs.machines.every(m=>m) && !fs.lockerOpen &&
+       near(ch2Player.x,ch2Player.y,fs.lockerPos.x,fs.lockerPos.y,1.6)){
+      fs.lockerOpen=true;
+      ch2ShowWireGame();
+    }
+  } else if(!fs.wiresDone){
+    // waiting on wire minigame UI
+  } else if(!fs.elevatorActive){
+    fs.elevatorActive=true;
+    fs.elevatorTimer=45;
+    showMsg("Wires connected! Get to the elevator — 45 seconds!", 4000);
+  } else {
+    fs.elevatorTimer-=dt;
+    if(near(ch2Player.x,ch2Player.y,fs.elevatorPos.x,fs.elevatorPos.y,1.4)){
+      ch2GameOver(true,"You rode the elevator out. Chapter 2 complete!");
+      return;
+    }
+    if(fs.elevatorTimer<=0){ ch2GameOver(false,"You didn't reach the elevator in time."); }
+  }
+}
+const WIRE_COLORS=["#ff5b3d","#3d7bff","#ffd94d","#3ddc84"];
+let wireLeftOrder=[], wireRightOrder=[], wireSelected=-1, wireMatched=[];
+function ch2ShowWireGame(){
+  wireLeftOrder=[0,1,2,3]; wireRightOrder=[0,1,2,3].sort(()=>Math.random()-0.5);
+  wireMatched=[false,false,false,false]; wireSelected=-1;
+  const grid=document.getElementById("wireGrid");
+  grid.innerHTML="";
+  const left=document.createElement("div"); left.className="wireCol";
+  const right=document.createElement("div"); right.className="wireCol";
+  wireLeftOrder.forEach(ci=>{
+    const b=document.createElement("div"); b.className="wireBtn"; b.style.background=WIRE_COLORS[ci];
+    b.onclick=()=>ch2WireClickLeft(ci,b); left.appendChild(b);
+  });
+  wireRightOrder.forEach(ci=>{
+    const b=document.createElement("div"); b.className="wireBtn"; b.style.background=WIRE_COLORS[ci];
+    b.onclick=()=>ch2WireClickRight(ci,b); right.appendChild(b);
+  });
+  grid.appendChild(left); grid.appendChild(right);
+  document.getElementById("wireOverlay").style.display="flex";
+}
+function ch2WireClickLeft(colorIdx, el){
+  if(wireMatched[colorIdx]) return;
+  document.querySelectorAll("#wireGrid .wireCol")[0].querySelectorAll(".wireBtn").forEach(b=>b.classList.remove("selected"));
+  el.classList.add("selected");
+  wireSelected=colorIdx;
+}
+function ch2WireClickRight(colorIdx, el){
+  if(wireSelected<0 || wireMatched[colorIdx]) return;
+  if(colorIdx===wireSelected){
+    el.classList.add("matched");
+    document.querySelectorAll("#wireGrid .wireCol")[0].querySelectorAll(".wireBtn").forEach((b,i)=>{
+      if(wireLeftOrder[i]===colorIdx) b.classList.add("matched");
+    });
+    wireMatched[colorIdx]=true;
+    wireSelected=-1;
+    if(wireMatched.every(m=>m)){
+      setTimeout(()=>{
+        document.getElementById("wireOverlay").style.display="none";
+        ch2.room.finalStage.wiresDone=true;
+      }, 500);
+    }
+  } else {
+    el.style.outline="3px solid #ff5b3d";
+    setTimeout(()=>{ el.style.outline=""; },300);
+  }
+}
+
+/* ---------- HUD / render ---------- */
+function updateCh2Hud(){
+  if(gameMode!=="ch2" || !ch2 || !ch2.room) return;
+  const hb=document.getElementById("hearts2Box"); hb.innerHTML="";
+  for(let i=0;i<ch2MaxLives;i++){ const sp=document.createElement("span"); sp.textContent="♥"; if(i>=ch2Lives) sp.classList.add("lost"); hb.appendChild(sp); }
+  document.getElementById("doorNumLabel").textContent=ch2.doorNum;
+  const reqRow=document.getElementById("keyReqRow");
+  if(ch2.keysRequired>0){ reqRow.style.display="block"; document.getElementById("keyCount2").textContent=ch2.keysCollected; document.getElementById("keyReq2").textContent=ch2.keysRequired; }
+  else reqRow.style.display="none";
+  const ammoRow=document.getElementById("ammoRow2");
+  if(ch2Bullets>0){ ammoRow.style.display="block"; document.getElementById("ammoCount2").textContent=ch2Bullets; }
+  else ammoRow.style.display="none";
+  let status="";
+  if(ch2.room.isChaseRoom) status="⚠ Chaser is loose";
+  if(ch2.room.isFinal){
+    const fs=ch2.room.finalStage;
+    status = fs.elevatorActive ? "Elevator: "+Math.ceil(fs.elevatorTimer)+"s" :
+      (fs.lockerOpen? "Connect the wires" : "🔋 "+fs.batteries+"/15 · ⚙ "+fs.machines.filter(m=>m).length+"/4");
+  }
+  document.getElementById("ch2StatusLabel").textContent=status;
+}
+function ch2Render(){
+  const r=ch2.room;
+  ctx.fillStyle="#0a0c10"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const camX=ch2Player.x-canvas.width/2, camY=ch2Player.y-canvas.height/2;
+  if(r.grid){
+    const x0=Math.max(0,Math.floor(camX/TILE)-1), x1=Math.min(r.cols,Math.ceil((camX+canvas.width)/TILE)+1);
+    const y0=Math.max(0,Math.floor(camY/TILE)-1), y1=Math.min(r.rows,Math.ceil((camY+canvas.height)/TILE)+1);
+    for(let x=x0;x<x1;x++){
+      for(let y=y0;y<y1;y++){
+        const sx=x*TILE-camX, sy=y*TILE-camY;
+        if(r.grid[x][y]===1){
+          ctx.fillStyle="#1c2230";
+          ctx.fillRect(sx,sy,TILE,TILE);
+          ctx.strokeStyle="rgba(255,255,255,0.03)"; ctx.strokeRect(sx,sy,TILE,TILE);
+        } else {
+          ctx.fillStyle="#05060a";
+          ctx.fillRect(sx,sy,TILE,TILE);
+        }
+      }
+    }
+  } else {
+    ctx.fillStyle="#171b23";
+    ctx.fillRect(0-camX,0-camY, r.cols*TILE, r.rows*TILE);
+  }
+  ctx.strokeStyle="#2a3140"; ctx.lineWidth=3;
+  ctx.strokeRect(0-camX,0-camY, r.cols*TILE, r.rows*TILE);
+  ctx.lineWidth=1;
+
+  if(r.closet){
+    ctx.fillStyle="rgba(120,90,60,0.5)";
+    ctx.fillRect((r.closet.x-r.closet.w)*TILE-camX,(r.closet.y-r.closet.h)*TILE-camY, r.closet.w*2*TILE, r.closet.h*2*TILE);
+    ctx.fillStyle="#fff"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("closet", r.closet.x*TILE-camX, r.closet.y*TILE-camY);
+  }
+
+  if(!r.isFinal){
+    const unlocked=ch2.keysCollected>=ch2.keysRequired;
+    ctx.fillStyle= unlocked ? "rgba(61,220,132,0.85)" : "rgba(232,68,58,0.85)";
+    ctx.beginPath(); ctx.arc(r.exit.x*TILE-camX, r.exit.y*TILE-camY, 15, 0, Math.PI*2);
+    ctx.shadowColor= unlocked?"#3ddc84":"#e8443a"; ctx.shadowBlur=16; ctx.fill(); ctx.shadowBlur=0;
+    r.items.forEach(it=>{
+      const icons={key:"🔑",bandage:"🩹",medkit:"💊",detector:"📡",lighter:"🔥",flashlight:"🔦"};
+      ctx.font="16px sans-serif"; ctx.textAlign="center";
+      ctx.fillText(icons[it.type]||"❔", it.x*TILE-camX, it.y*TILE-camY+5);
+    });
+  } else {
+    const fs=r.finalStage;
+    ctx.fillStyle="#ffd94d"; ctx.font="14px sans-serif"; ctx.textAlign="center";
+    fs.batterySpots.forEach(b=>{ if(!b.taken) ctx.fillText("🔋", b.x*TILE-camX, b.y*TILE-camY); });
+    fs.machineSpots.forEach((m,i)=>{
+      ctx.fillStyle= fs.machines[i]?"#3ddc84":"#aaa";
+      ctx.fillRect(m.x*TILE-camX-10, m.y*TILE-camY-10, 20,20);
+      if(!fs.machines[i]){
+        ctx.fillStyle="#333"; ctx.font="9px sans-serif";
+        ctx.fillText(Math.floor(fs.machineProgress[i])+"/80", m.x*TILE-camX, m.y*TILE-camY+22);
+      }
+    });
+    ctx.fillStyle= fs.lockerOpen?"#3ddc84":"#e8443a";
+    ctx.fillRect(fs.lockerPos.x*TILE-camX-12, fs.lockerPos.y*TILE-camY-12, 24,24);
+    if(fs.elevatorActive){
+      ctx.fillStyle="rgba(61,220,132,0.85)";
+      ctx.beginPath(); ctx.arc(fs.elevatorPos.x*TILE-camX, fs.elevatorPos.y*TILE-camY, 18,0,Math.PI*2);
+      ctx.shadowColor="#3ddc84"; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
+    }
+  }
+
+  if(speakerDecoy){
+    ctx.font="18px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("📢", speakerDecoy.x-camX, speakerDecoy.y-camY);
+  }
+  if(r.police){
+    ctx.fillStyle= r.police.stunTimer>0 ? "#7a8aa8" : "#c23a3a";
+    ctx.beginPath(); ctx.arc(r.police.x-camX, r.police.y-camY, 10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="12px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(r.police.stunTimer>0 ? "💫" : "👮", r.police.x-camX, r.police.y-camY+4);
+  }
+  if(ch2.chaser){
+    ctx.fillStyle= ch2.chaser.stunTimer>0 ? "#7a8aa8" : "#8a2be2";
+    ctx.beginPath(); ctx.arc(ch2.chaser.x-camX, ch2.chaser.y-camY, 10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="12px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(ch2.chaser.stunTimer>0 ? "💫" : "👤", ch2.chaser.x-camX, ch2.chaser.y-camY+4);
+  }
+  if(isMultiplayer){
+    Object.values(remotePlayers).forEach(p=>{
+      ctx.globalAlpha = p.lives>0?1:0.35;
+      ctx.fillStyle="#5bc0ff";
+      ctx.beginPath(); ctx.arc(p.x-camX,p.y-camY,9,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.fillStyle="#cfe8ff"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+      ctx.fillText(p.username||"Player", p.x-camX, p.y-camY-14);
+    });
+  }
+  ctx.fillStyle="#ffb63d";
+  ctx.beginPath(); ctx.arc(ch2Player.x-camX, ch2Player.y-camY, 9,0,Math.PI*2); ctx.fill();
+  if(isMultiplayer){
+    ctx.fillStyle="#ffe3b0"; ctx.font="11px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(username||"You", ch2Player.x-camX, ch2Player.y-camY-14);
+  }
+
+  const lit = (ch2Inventory.some(it=>(it.type==="lighter"||it.type==="flashlight") && it.on)) || equippedClass==="nightvision";
+  if(r.isBlackout){
+    if(!maskCanvas || maskCanvas.width!==canvas.width || maskCanvas.height!==canvas.height){
+      maskCanvas=document.createElement("canvas"); maskCanvas.width=canvas.width; maskCanvas.height=canvas.height;
+      maskCtx=maskCanvas.getContext("2d");
+    }
+    maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.fillStyle="rgba(0,0,0,0.95)";
+    maskCtx.fillRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.globalCompositeOperation="destination-out";
+    const px=ch2Player.x-camX, py=ch2Player.y-camY;
+    const flashlightItem = ch2Inventory.find(it=>it.type==="flashlight" && it.on);
+    const radius = (flashlightItem || equippedClass==="nightvision") ? 150 : (lit?100:36);
+    let core=maskCtx.createRadialGradient(px,py,0,px,py,radius);
+    core.addColorStop(0,"rgba(255,255,255,1)"); core.addColorStop(1,"rgba(255,255,255,0)");
+    maskCtx.fillStyle=core; maskCtx.beginPath(); maskCtx.arc(px,py,radius,0,Math.PI*2); maskCtx.fill();
+    maskCtx.globalCompositeOperation="source-over";
+    ctx.drawImage(maskCanvas,0,0);
+  }
+  if(ch2DetectorRevealTimer>0){
+    const threat = r.police || ch2.chaser;
+    if(threat){
+      ctx.strokeStyle="#7ee0ff"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(threat.x-camX, threat.y-camY, 16,0,Math.PI*2); ctx.stroke();
+    }
+  }
+}
+
+/* ---------- multiplayer sync ---------- */
+function ch2BroadcastState(){
+  const r=ch2.room;
+  const players={};
+  players["HOST"]={username, x:ch2Player.x, y:ch2Player.y, facing, lives:ch2Lives, alive:ch2Lives>0};
+  Object.keys(remotePlayers).forEach(id=>{
+    const p=remotePlayers[id];
+    players[id]={username:p.username, x:p.x, y:p.y, facing:p.facing, lives:p.lives, alive:p.lives>0};
+  });
+  broadcast({
+    type:"ch2_state",
+    doorNum:ch2.doorNum, keysCollected:ch2.keysCollected, keysRequired:ch2.keysRequired,
+    items:r.isFinal?null:r.items, rushState:r.rushState,
+    police:r.police, chaser:ch2.chaser,
+    finalStage:r.isFinal?r.finalStage:null,
+    players
+  });
+}
+function ch2ApplyStateSnapshot(data){
+  if(data.doorNum!==ch2.doorNum){ ch2EnterRoom(data.doorNum); }
+  ch2.keysCollected=data.keysCollected; ch2.keysRequired=data.keysRequired;
+  if(!ch2.room.isFinal && data.items) ch2.room.items=data.items;
+  const oldRushState = ch2.room.rushState;
+  ch2.room.rushState=data.rushState;
+  if(!isHost && oldRushState==="hiding" && data.rushState!=="hiding"){
+    document.getElementById("rushWarning").style.display="none";
+    if(!ch2InCloset()){ ch2GameOver(false,"Rush caught you."); return; }
+  }
+  if(oldRushState!=="hiding" && data.rushState==="hiding" && !isHost){
+    document.getElementById("rushWarning").style.display="block";
+    unlockAchievement("bound");
+  }
+  if(data.police) ch2.room.police=data.police;
+  ch2.chaser=data.chaser;
+  if(ch2.room.isFinal && data.finalStage) ch2.room.finalStage=data.finalStage;
+  const myId=myClientId();
+  const next={};
+  Object.keys(data.players).forEach(id=>{ if(id!==myId) next[id]=data.players[id]; });
+  remotePlayers=next;
+  updateCh2Hud();
+}
+function ch2GameOver(won, text){
+  gameActive=false;
+  if(!won && ch2 && ch2.doorNum===100) unlockAchievement("door100_death");
+  if(isMultiplayer && ch2Authoritative()){
+    broadcast({type: won?"win":"lose", text});
+  }
+  gameOver(won, text);
+}
+
+/* wire in Chapter 2 handling to the existing network + loop plumbing */
+const _origHandleHostReceive = handleHostReceive;
+handleHostReceive = function(conn, data){
+  if(gameMode==="ch2" || data.type.indexOf("ch2_")===0){
+    const p=remotePlayers[conn.peer];
+    if(!p) return;
+    switch(data.type){
+      case "ch2_pickup": ch2ResolvePickup(data.id, false); return;
+    }
+  }
+  return _origHandleHostReceive(conn, data);
+};
+const _origHandleClientReceive = handleClientReceive;
+handleClientReceive = function(data){
+  if(data.type==="ch2_state"){ ch2ApplyStateSnapshot(data); return; }
+  return _origHandleClientReceive(data);
+};
+loop = function(t){
+  if(!gameActive) return;
+  const dt = Math.min(0.05,(t-lastTime)/1000);
+  lastTime=t;
+  if(gameMode==="ch2"){ ch2Update(dt); ch2Render(); }
+  else { update(dt); render(); }
+  animId=requestAnimationFrame(loop);
+};
+
+})();
+</script>
+</body>
+</html>
